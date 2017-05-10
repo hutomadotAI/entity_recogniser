@@ -4,17 +4,20 @@ LABEL maintainer "Paul Annetts <paul.annetts@hutoma.com>"
 
 RUN pip install --upgrade pip
 
-# download the spacy model as contained in spacy_model.txt
+# Download the spacy model as contained in spacy_model.txt
 # Using the file makes it easy to keep it consistent between virtualenv and Docker
 COPY hu_entity/spacy_model.txt .
-RUN cat spacy_model.txt | xargs wget -O spacy_model.tar.gz
+# Download, pip install spacy and the model and cleanup the .tar.gz
+RUN pip install spacy && \
+  cat spacy_model.txt | xargs wget -O spacy_model.tar.gz && \
+  pip install spacy_model.tar.gz && \
+  rm spacy_model.tar.gz
 
 # Copy common code
 COPY requirements.txt .
 COPY vendor/common/src/ /vendor/common/src
 # PIP install requirements and the spacy model
-RUN pip install --upgrade -r requirements.txt && \
-  pip install spacy_model.tar.gz
+RUN pip install --upgrade -r requirements.txt
 
 # Copy the code
 COPY setup.py src/
