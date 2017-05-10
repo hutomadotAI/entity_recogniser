@@ -1,0 +1,19 @@
+version: '2'
+
+services:
+  ner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ner
+    ports:
+     - "8891:9095"
+
+  ner_test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    image: ner_test
+    depends_on:
+     - ner
+

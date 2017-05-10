@@ -1,0 +1,12 @@
+# Base off of the development image
+FROM ner:latest
+LABEL maintainer "Paul Annetts <paul.annetts@hutoma.com>"
+
+# Get testing frameworks
+COPY requirements*.txt ./
+RUN pip3 install --upgrade -r requirements_test.txt
+
+# Copy AI test training data
+COPY tests/ /src/tests/
+
+CMD [ "pytest", "--cov=hu_entity", "/src/", "--tb=native"]
