@@ -26,4 +26,4 @@ RUN pip install -e /src
 
 # Make available port 9095
 EXPOSE 9095
-CMD [ "python", "src/hu_entity/server.py", "9095" ]
+CMD [ "python", "src/hu_entity/server.py", "--port=9095" ]
