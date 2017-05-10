@@ -1,0 +1,9 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+    "python.pythonPath": "venv/entity_unix/bin/python",
+    "python.unitTest.pyTestArgs": [
+        "--ignore=venv",
+        "--ignore=src/vendor"
+    ],
+    "python.unitTest.pyTestEnabled": true
+}

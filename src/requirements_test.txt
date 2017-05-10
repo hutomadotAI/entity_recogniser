@@ -1,0 +1,8 @@
+-r requirements.txt
+wget
+pylint
+pytest
+pytest-aiohttp
+pytest-cov
+
+

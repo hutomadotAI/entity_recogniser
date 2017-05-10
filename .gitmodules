@@ -1,0 +1,3 @@
+[submodule "src/vendor/common"]
+	path = src/vendor/common
+	url = https://hutoma.visualstudio.com/Hutoma%20API/_git/python_common
