@@ -11,7 +11,7 @@ class NamedEntity(object):
     def to_json(self):
         """Convert self to JSON string"""
         data = {'named_entity': self.named_entity,
-                'lable': self.label}
+                'label': self.label}
         json_data = json.dumps(data)
         return json_data
 

@@ -1,6 +1,6 @@
 """The named entity recognizer service"""
 import argparse
-import json
+import logging
 import os
 from pathlib import Path
 
@@ -17,7 +17,7 @@ import hu_logging
 DATA_DIR = Path(os.path.dirname(os.path.realpath(__file__)) + '/data')
 
 def _get_logger():
-    logger = hu_logging.get_logger('hu_entity.server')
+    logger = hu_logging.get_logger('hu_entity.server', console_log_level=logging.INFO)
     return logger
 
 class EntityRecognizerServer:
@@ -111,11 +111,11 @@ class EntityRecognizerServer:
         the function returns a collection of recognized entities as JSON response
         '''
         q = request.rel_url.query['q']
-        self.logger.info("Entity request '%s'" % q)
+        self.logger.info("Entity request '%s'", q)
         entities = self.get_entities(q)
-        resp = web.Response()
-        resp.text = json.dumps(entities)
-        resp.content_type = 'application/json'
+        json_objects = [entity.to_json() for entity in entities]
+        self.logger.info("Entities found: '%s'", json_objects)
+        resp = web.json_response(json_objects)
         return resp
 
 
