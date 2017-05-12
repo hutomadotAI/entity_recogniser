@@ -44,30 +44,10 @@ class EntityRecognizerServer:
     def add_entity(self, entity, key, lbl):
         """ add a custom entity to the NER with key 'key' and label 'lbl' """
         terms = entity.split()
-        if len(terms) == 1:
-            self.matcher.add(entity_key=str(key), label=lbl, attrs={}, specs=[[{spacy.attrs.ORTH: terms[0].strip()}]],
-                        on_match=self.merge_phrases)
 
-        if len(terms) == 2:
-            self.matcher.add(entity_key=str(key), label=lbl, attrs={},
-                        specs=[[{spacy.attrs.ORTH: terms[0].strip()}, {spacy.attrs.ORTH: terms[1].strip()}]],
-                        on_match=self.merge_phrases)
-
-        if len(terms) == 3:
-            self.matcher.add(entity_key=str(key), label=lbl, attrs={}, specs=[
-                [{spacy.attrs.ORTH: terms[0].strip()},
-                {spacy.attrs.ORTH: terms[1].strip()},
-                {spacy.attrs.ORTH: terms[2].strip()}]], 
-                on_match=self.merge_phrases)
-
-        if len(terms) == 4:
-            self.matcher.add(entity_key=str(key), label=lbl, attrs={}, specs=[
-                [{spacy.attrs.ORTH: terms[0].strip()},
-                {spacy.attrs.ORTH: terms[1].strip()},
-                {spacy.attrs.ORTH: terms[2].strip()},
-                {spacy.attrs.ORTH: terms[3].strip()}]], 
-                on_match=self.merge_phrases)
-
+        specs = [[{spacy.attrs.ORTH: term.strip()} for term in terms]]
+        self.matcher.add(entity_key=str(key), label=lbl, attrs={}, specs=specs,
+            on_match=self.merge_phrases)
 
     def initialize_NER_with_custom_locations(self):
         # set the custom entity to 0. We increment this number for each new entity so they have a unique identifier
@@ -82,10 +62,10 @@ class EntityRecognizerServer:
                 # gets the location name from the line just read
                 location_name = columns[1]
                 if len(location_name) > 3:
-                    self.add_entity(location_name, key, 'GPE')
+                    self.add_entity(location_name, key, 'custom_cities')
                     # adds the entity all lower case.
                     # This is needed so we can recognize both 'London' and 'london'
-                    self.add_entity(location_name.lower(), key, 'GPE')
+                    self.add_entity(location_name.lower(), key, 'custom_cities')
                     # increaments the key
                     key += 1
         return key
