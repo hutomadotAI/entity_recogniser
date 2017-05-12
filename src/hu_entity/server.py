@@ -11,6 +11,7 @@ import spacy.matcher
 import en_core_web_md
 
 from hu_entity.named_entity import NamedEntity
+from hu_entity.named_entity import dumps_custom
 
 import hu_logging
 
@@ -82,7 +83,7 @@ class EntityRecognizerServer:
                 location_name = columns[1]
                 if len(location_name) > 3:
                     self.add_entity(location_name, key, 'GPE')
-                    # adds the entity all lower case. 
+                    # adds the entity all lower case.
                     # This is needed so we can recognize both 'London' and 'london'
                     self.add_entity(location_name.lower(), key, 'GPE')
                     # increaments the key
@@ -110,33 +111,41 @@ class EntityRecognizerServer:
         '''
         the function returns a collection of recognized entities as JSON response
         '''
-        q = request.rel_url.query['q']
+        url = request.url
+        q = url.query.get('q', None)
+        if q is None:
+            self.logger.warning('Invalid NER request, no q query parameter, url was %s',
+                                url)
+            raise web.HTTPBadRequest()
+
         self.logger.info("Entity request '%s'", q)
         entities = self.get_entities(q)
-        json_objects = [entity.to_json() for entity in entities]
-        self.logger.info("Entities found: '%s'", json_objects)
-        resp = web.json_response(json_objects)
+        self.logger.info("Entities found: '%s'", entities)
+        resp = web.json_response(entities, dumps=dumps_custom)
         return resp
 
 
-
+def initialize_web_app(web_app, er_server):
+    logger = _get_logger()
+    logger.warning("Entity Recognizer initializing server.")
+    web_app.router.add_route('GET', '/ner', er_server.handle)
+    
 def main():
     """Main function"""
     hu_logging.initialize_logging('/tmp/hu_entity_log', "NER")
-    logger = _get_logger()
-    logger.warning("Entity Recognizer booting up.")
+    web_app = web.Application()
+    er_server = EntityRecognizerServer()
+    er_server.initialize_NER_with_custom_locations()
+
+    initialize_web_app(web_app, er_server)
     parser = argparse.ArgumentParser(description="NER server")
     parser.add_argument('--port', type=int, default=9095)
     args = parser.parse_args()
     port = args.port
 
-    er_server = EntityRecognizerServer()
-    er_server.initialize_NER_with_custom_locations()
-    app = web.Application()
-    app.router.add_route('GET', '/ner', er_server.handle)
+    logger = _get_logger()
     logger.warning("Starting entity recognizer API on port %d", port)
-    web.run_app(app, port=port)
-
+    web.run_app(web_app, port=port)
 
 if __name__ == '__main__':
     main()
