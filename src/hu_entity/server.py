@@ -83,6 +83,8 @@ class EntityRecognizerServer:
             named_entity = NamedEntity(word.text, word.label_, word.start_char, word.end_char)
             if named_entity.category is not None:
                 entity_list.append(named_entity)
+            else:
+                self.logger.info("Skipping uncategorized entity %s", named_entity)
 
         return entity_list
 
