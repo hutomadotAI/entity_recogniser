@@ -81,7 +81,7 @@ class EntityRecognizerServer:
 
         entity_list = []
         for word in doc.ents:
-            e = NamedEntity(word.label_, word.text)
+            e = NamedEntity(word.label_, word.text, word.start_char, word.end_char)
             entity_list.append(e)
 
         return entity_list
