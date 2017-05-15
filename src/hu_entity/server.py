@@ -78,11 +78,11 @@ class EntityRecognizerServer:
         self.matcher(doc)
 
         # list of all recognized entities
-
         entity_list = []
         for word in doc.ents:
-            e = NamedEntity(word.label_, word.text, word.start_char, word.end_char)
-            entity_list.append(e)
+            named_entity = NamedEntity(word.text, word.label_, word.start_char, word.end_char)
+            if named_entity.category is not None:
+                entity_list.append(named_entity)
 
         return entity_list
 
