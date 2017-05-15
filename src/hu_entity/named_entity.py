@@ -8,13 +8,15 @@ ENTITY_CATEGORY_MAPPING = {
     "NORP": "sys.group",
     "FAC": "sys.geopolitical",
     "ORG": "sys.organization",
+    "LOC": "sys.geopolitical",
     "LANGUAGE": "sys.group",
     # values recognized
     "DATE": "sys.date",
     "TIME": "sys.time",
     "PERCENT": "sys.percent",
     "MONEY": "sys.number",
-    "ORDINAL": "sys.number",
+    "QUANTITY": "sys.number",
+    "ORDINAL": "sys.ordinal",
     "CARDINAL": "sys.number",
     # custom entities we added
     "custom_cities": "sys.geopolitical",
