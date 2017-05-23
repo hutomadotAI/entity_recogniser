@@ -66,7 +66,8 @@ class EntityRecognizerServer:
                 # gets the location name from the line just read
                 location_name = columns[1]
                 # removes city names that can be confused with a stop word (ex. Is, As)
-                if location_name.lower() not in stopw:
+                # and cities with short names such as "see"
+                if location_name.lower() not in stopw and len(location_name) > 3:
                     self.add_entity(location_name, key, 'custom_cities')
                     # adds the entity all lower case.
                     # This is needed so we can recognize both 'London' and 'london'
