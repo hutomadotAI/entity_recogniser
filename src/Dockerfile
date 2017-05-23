@@ -19,6 +19,9 @@ COPY vendor/common/src/ /vendor/common/src
 # PIP install requirements and the spacy model
 RUN pip install --upgrade -r requirements.txt
 
+# Get the NLTK corpus data
+RUN python -m nltk.downloader stopwords
+
 # Copy the code
 COPY setup.py src/
 COPY hu_entity/ src/hu_entity/

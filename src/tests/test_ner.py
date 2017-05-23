@@ -176,6 +176,10 @@ def test_recognize_number_2(ner_server):
     assert entity.start_loc == 0
     assert entity.end_loc == 4
 
+def test_does_not_recognize_stopwords_as_city(ner_server):
+    entity_list = ner_server.get_entities("London is a city")
+    assert len(entity_list) == 1
+
 @pytest.fixture()
 def cli(loop, test_client, ner_server):
     """Defines the CLI test HTTP client which will start a test HTTP server.
