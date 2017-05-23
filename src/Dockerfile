@@ -13,15 +13,14 @@ RUN pip install spacy && \
   pip install spacy_model.tar.gz && \
   rm spacy_model.tar.gz
 
-# Get the NLTK corpus data
-RUN python -m nltk.downloader stopwords
-
 # Copy common code
 COPY requirements.txt .
 COPY vendor/common/src/ /vendor/common/src
 # PIP install requirements and the spacy model
 RUN pip install --upgrade -r requirements.txt
 
+# Get the NLTK corpus data
+RUN python -m nltk.downloader stopwords
 
 # Copy the code
 COPY setup.py src/
