@@ -122,7 +122,7 @@ def main():
     """Main function"""
     hu_logging.initialize_logging('/tmp/hu_entity_log', "NER")
     web_app = web.Application()
-    env_minimal_server_str = os.environ.get("ERS_MINIMAL_SERVER", None)
+    env_minimal_server_str = os.environ.get("ERS_MINIMAL_SERVER", "")
 
     logger = _get_logger()
     try:
