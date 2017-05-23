@@ -3,8 +3,8 @@ import argparse
 import logging
 import os
 from pathlib import Path
-
 from aiohttp import web
+from nltk.corpus import stopwords
 
 import spacy
 import spacy.matcher
@@ -56,7 +56,7 @@ class EntityRecognizerServer:
     def initialize_NER_with_custom_locations(self):
         # set the custom entity to 0. We increment this number for each new entity so they have a unique identifier
         key = 0
-
+        stopw = set(stopwords.words('english'))
         # reads the city file
         city_path = DATA_DIR/'cities1000.txt'
         self.logger.warning('Add custom locations from %s', city_path)
@@ -65,7 +65,8 @@ class EntityRecognizerServer:
                 columns = line.split('\t')
                 # gets the location name from the line just read
                 location_name = columns[1]
-                if len(location_name) > 3:
+                # removes city names that can be confused with a stop word (ex. Is, As)
+                if location_name.lower() not in stopw:
                     self.add_entity(location_name, key, 'custom_cities')
                     # adds the entity all lower case.
                     # This is needed so we can recognize both 'London' and 'london'
