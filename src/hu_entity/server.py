@@ -23,11 +23,15 @@ def _get_logger():
 
 class EntityRecognizerServer:
 
-    def __init__(self):
+    def __init__(self, minimal_ers_mode=False):
         self.logger = _get_logger()
-        self.logger.warning("Loading model...")
         # reads the spacy model
-        self.nlp = en_core_web_md.load()
+        if minimal_ers_mode:
+            self.logger.warning("Loading minimal model...")
+            self.nlp = spacy.load("en")
+        else:
+            self.logger.warning("Loading full model...")
+            self.nlp = en_core_web_md.load()
         # initialize the matcher with the model just read
         self.matcher = spacy.matcher.Matcher(self.nlp.vocab)
 
@@ -111,12 +115,21 @@ def initialize_web_app(web_app, er_server):
     logger = _get_logger()
     logger.warning("Entity Recognizer initializing server.")
     web_app.router.add_route('GET', '/ner', er_server.handle)
-    
+
 def main():
     """Main function"""
     hu_logging.initialize_logging('/tmp/hu_entity_log', "NER")
     web_app = web.Application()
-    er_server = EntityRecognizerServer()
+    env_minimal_server_str = os.environ.get("ERS_MINIMAL_SERVER", None)
+
+    logger = _get_logger()
+    try:
+        env_minimal_server_int = int(env_minimal_server_str)
+    except ValueError:
+        env_minimal_server_int = 0
+        logger.warning("ERS_MINIMAL_SERVER not set or invalid '{}'".format(env_minimal_server_str))
+
+    er_server = EntityRecognizerServer(env_minimal_server_int)
     er_server.initialize_NER_with_custom_locations()
 
     initialize_web_app(web_app, er_server)
@@ -125,7 +138,6 @@ def main():
     args = parser.parse_args()
     port = args.port
 
-    logger = _get_logger()
     logger.warning("Starting entity recognizer API on port %d", port)
     web.run_app(web_app, port=port)
 
