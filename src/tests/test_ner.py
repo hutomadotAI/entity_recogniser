@@ -17,7 +17,7 @@ def test_recognize_location(ner_server):
     entity = entity_list[0]
     assert entity.entity_value == 'Reading'
     assert entity.spacy_category == 'custom_cities'
-    assert entity.category == 'sys.geopolitical'
+    assert entity.category == 'sys.places'
     assert entity.start_loc == 0
     assert entity.end_loc == 7
 
@@ -48,7 +48,7 @@ def test_recognize_fac(ner_server):
     print(entity)
     assert entity.entity_value == 'Route 66'
     assert entity.spacy_category == 'FAC'
-    assert entity.category == 'sys.geopolitical'
+    assert entity.category == 'sys.places'
     assert entity.start_loc == 0
     assert entity.end_loc == 8
 
@@ -70,7 +70,7 @@ def test_recognize_loc(ner_server):
     print(entity)
     assert entity.entity_value == 'Lake Tahoe'
     assert entity.spacy_category == 'LOC'
-    assert entity.category == 'sys.geopolitical'
+    assert entity.category == 'sys.places'
     assert entity.start_loc == 0
     assert entity.end_loc == 10
 
@@ -203,7 +203,7 @@ async def test_server_ner_q_1(cli):
     assert isinstance(json_resp, list)
     assert len(json_resp) == 1
     item = json_resp[0]
-    assert item['category'] == "sys.geopolitical"
+    assert item['category'] == "sys.places"
     assert item['value'] == "Reading"
     assert item['start'] == 0
     assert item['end'] == 7
@@ -222,7 +222,7 @@ async def test_server_ner_multi_instance(cli):
     assert isinstance(json_resp, list)
     assert len(json_resp) == 2
     item = json_resp[0]
-    assert item['category'] == "sys.geopolitical"
+    assert item['category'] == "sys.places"
     assert item['value'] == "Reading"
     assert item['start'] == 22
     assert item['end'] == 29

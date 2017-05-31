@@ -3,12 +3,12 @@ import json
 # map from typeshttps://spacy.io/docs/usage/entity-recognition#entity-type
 ENTITY_CATEGORY_MAPPING = {
     # names of entities
-    "GPE": "sys.geopolitical",
+    "GPE": "sys.places",
     "PERSON": "sys.person",
     "NORP": "sys.group",
-    "FAC": "sys.geopolitical",
+    "FAC": "sys.places",
     "ORG": "sys.organization",
-    "LOC": "sys.geopolitical",
+    "LOC": "sys.places",
     "LANGUAGE": "sys.group",
     # values recognized
     "DATE": "sys.date",
@@ -19,7 +19,7 @@ ENTITY_CATEGORY_MAPPING = {
     "ORDINAL": "sys.ordinal",
     "CARDINAL": "sys.number",
     # custom entities we added
-    "custom_cities": "sys.geopolitical",
+    "custom_cities": "sys.places",
 }
 
 class NamedEntity(object):
