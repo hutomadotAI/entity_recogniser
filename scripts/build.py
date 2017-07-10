@@ -29,7 +29,7 @@ def python_test(name, build_args, path, venv_location, ignore_dirs=None):
     """Does a Pytest build from a virtual environment"""
     venv_executable = str(venv_location / 'bin' / 'python')
     cmdline = [venv_executable, "-m", "pytest", str(path), "-m", "not integration_test",
-               "--junitxml=TEST-pytest.{}.xml".format(name)]
+               "--junitxml=TEST-pytest.{}.xml".format(name), "--timeout=30"]
     if ignore_dirs is not None:
         cmdline.append('--ignore={}'.format(ignore_dirs))
 
