@@ -1,5 +1,5 @@
+-r vendor/common/src/hu_utils/requirements_test.txt
 -r requirements.txt
--r vendor/common/src/requirements_test.txt
-wget
-
+wget==3.2
+pytest-aiohttp==0.1.3
 
