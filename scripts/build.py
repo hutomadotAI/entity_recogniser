@@ -50,10 +50,6 @@ def main(build_args):
                 ROOT_DIR/'venv'/'entity_unix',
                 ignore_dirs='vendor')
 
-    python_test('python_common',
-                build_args,
-                src_path/'vendor'/'common'/'src',
-                ROOT_DIR/'venv'/'entity_unix')
 
 if __name__ == "__main__":
     PARSER = argparse.ArgumentParser(description='Python Common build command-line')

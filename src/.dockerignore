@@ -6,6 +6,5 @@
 **/.egg-info
 
 # ignore tests
-**/tests/
 **/TEST*.xml
 

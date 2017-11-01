@@ -15,7 +15,6 @@ RUN pip install spacy && \
 
 # Copy common code
 COPY requirements.txt .
-COPY vendor/common/src/ /vendor/common/src
 # PIP install requirements and the spacy model
 RUN pip install --upgrade -r requirements.txt
 

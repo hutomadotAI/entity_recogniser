@@ -1,5 +1,11 @@
--r vendor/common/src/hu_utils/requirements_test.txt
 -r requirements.txt
-wget==3.2
+pytest==3.2.3
 pytest-aiohttp==0.1.3
+pytest-timeout==1.2.0
+pytest-cov==2.5.1
+wget==3.2
+
+# linting tools used in VSCode
+pylint
+pep8
 

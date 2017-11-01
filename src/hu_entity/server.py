@@ -1,6 +1,7 @@
 """The named entity recognizer service"""
 import argparse
 import logging
+import logging.config
 import os
 from pathlib import Path
 from aiohttp import web
@@ -9,6 +10,7 @@ from nltk.corpus import stopwords
 import spacy
 import spacy.matcher
 import en_core_web_md
+import yaml
 
 from hu_entity.named_entity import NamedEntity
 from hu_entity.named_entity import dumps_custom
@@ -18,7 +20,7 @@ import hu_logging
 DATA_DIR = Path(os.path.dirname(os.path.realpath(__file__)) + '/data')
 
 def _get_logger():
-    logger = hu_logging.get_logger('hu_entity.server', console_log_level=logging.INFO)
+    logger = logging.getLogger('hu_entity.server')
     return logger
 
 class EntityRecognizerServer:
@@ -118,9 +120,37 @@ def initialize_web_app(web_app, er_server):
     logger.warning("Entity Recognizer initializing server.")
     web_app.router.add_route('GET', '/ner', er_server.handle)
 
+LOGGING_CONFIG_TEXT = """
+version: 1
+root:
+  level: DEBUG
+  handlers: ['console' ,'elastic']
+formatters:
+  default:
+    format: "%(asctime)s.%(msecs)03d|%(levelname)s|%(name)s|%(message)s"
+    datefmt: "%Y%m%d_%H%M%S"
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    stream: ext://sys.stdout
+    formatter: default
+  elastic:
+    class: hu_logging.HuLogHandler
+    level: INFO
+    log_path: /tmp/hu_log
+    log_tag: DUMMY_BACKEND
+    es_log_index: entity-recog-v1
+    multi_process: False
+"""
+
 def main():
     """Main function"""
-    hu_logging.initialize_logging('/tmp/hu_entity_log', "NER")
+    logging_config = yaml.load(LOGGING_CONFIG_TEXT)
+    logging_config['handlers']['elastic']['elastic_search_url'] = \
+        os.environ.get('LOGGING_ES_URL', None)
+    logging.config.dictConfig(logging_config)
+
     web_app = web.Application()
     env_minimal_server_str = os.environ.get("ERS_MINIMAL_SERVER", "")
 
