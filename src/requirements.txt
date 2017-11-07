@@ -1,4 +1,5 @@
-spacy==1.9.0
+# don't forget to update spacy in the Dockerfile
+spacy==1.10.0
 nltk==3.2.4
 aiohttp==2.3.1
 elasticsearch==5.4.0
@@ -10,6 +11,6 @@ pyyaml==3.12.0
 --extra-index-url http://dev-web.hutoma.com:8088
 
 # add dependencies
-hu_logging==0.3.5
-hu_utils==0.3.7
+hu_logging==0.3.9
+hu_utils==0.3.9
 
