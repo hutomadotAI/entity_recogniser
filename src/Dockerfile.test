@@ -2,11 +2,14 @@
 FROM ner:latest
 LABEL maintainer "Paul Annetts <paul.annetts@hutoma.com>"
 
+USER root
 # Get testing frameworks
 COPY requirements*.txt ./
-RUN pip3 install --upgrade -r requirements_test.txt
+RUN pip3 install --no-cache-dir --upgrade -r requirements_test.txt
 
 # Copy AI test training data
 COPY tests/ /src/tests/
+
+USER appuser
 
 CMD [ "pytest", "--cov=hu_entity", "/src/", "--tb=native"]

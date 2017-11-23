@@ -139,7 +139,7 @@ handlers:
     class: hu_logging.HuLogHandler
     level: INFO
     log_path: /tmp/hu_log
-    log_tag: DUMMY_BACKEND
+    log_tag: ENTITY
     es_log_index: entity-recog-v1
     multi_process: False
 """
