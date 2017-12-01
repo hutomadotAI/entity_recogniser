@@ -4,24 +4,33 @@ import logging
 import logging.config
 import os
 from pathlib import Path
+import aiohttp
+import traceback
 from aiohttp import web
 from nltk.corpus import stopwords
 
 import spacy
 import spacy.matcher
-import en_core_web_md
 import yaml
 
 from hu_entity.named_entity import NamedEntity
 from hu_entity.named_entity import dumps_custom
-
-import hu_logging
 
 DATA_DIR = Path(os.path.dirname(os.path.realpath(__file__)) + '/data')
 
 def _get_logger():
     logger = logging.getLogger('hu_entity.server')
     return logger
+
+CUSTOM_CITIES_TAG = "custom_cities"
+def entity_to_string(ent):
+    return "{{'{}', key:{}, ID:{}, at({}:{})}}".format(
+        ent,
+        ent.ent_id,
+        ent.label,
+        ent.start,
+        ent.end
+    )
 
 class EntityRecognizerServer:
 
@@ -30,52 +39,87 @@ class EntityRecognizerServer:
         # reads the spacy model
         if minimal_ers_mode:
             self.logger.warning("Loading minimal model...")
-            self.nlp = spacy.load("en")
+            self.nlp = spacy.load("en_core_web_sm")
         else:
             self.logger.warning("Loading full model...")
-            self.nlp = en_core_web_md.load()
+            self.nlp = spacy.load("en_core_web_md")
         # initialize the matcher with the model just read
         self.matcher = spacy.matcher.Matcher(self.nlp.vocab)
+        self.nlp.vocab[CUSTOM_CITIES_TAG]
+        self.CUSTOM_CITIES_ID = self.nlp.vocab[CUSTOM_CITIES_TAG].orth
+        self.GPE_ID = self.nlp.vocab['GPE'].orth
+        self.logger.warning('Entity ids: CUSTOM_CITIES={}, GPE={}'.format(self.CUSTOM_CITIES_ID, self.GPE_ID))
 
 
-    def merge_phrases(self, matcher, doc, i, matches):
+
+    def on_entity_match(self, matcher, doc, i, matches):
         """ merge phrases before they are added to the NER """
-        if i != len(matches) - 1:
-            return None
-        spans = [(ent_id, label, doc[start: end]) for ent_id, label, start, end in matches]
-        for ent_id, label, span in spans:
-            span.merge('NNP' if label else span.root.tag_, span.text, self.nlp.vocab.strings[label])
+        match_id, start, end = matches[i]
+        span = doc[start:end]
+        match_text = span.text
+        self.logger.info("Custom entity candidate match for {'%s', key:%s, ID:%s, at(%s,%s)}",
+            match_text, match_id, self.CUSTOM_CITIES_ID, start, end)        
+        
+        candidate_entity = (match_id, self.CUSTOM_CITIES_ID, start, end)
+        add_candidate = True
 
+        # scan through existing entities and decide whether we want to keep them
+        new_doc_ents = []
+        for ent in doc.ents:
+            add_this_entity = True
+            ent_start = ent.start
+            ent_end = ent.end
+            if ((ent_start <= start and ent_end >= start) or
+                (ent_start < end and ent_end >= end)):
+                # The existing entity wins if it is longer than the candidate
+                # (at same length the candidate wins)
+                if (ent_end - ent_start) > (end - start):
+                    add_candidate = False
+                else:
+                    add_this_entity = False
+                self.logger.info("Candidate clashes with existing entity %s, use candidate=%s",
+                    entity_to_string(ent), add_candidate)        
+                
+            if add_this_entity:
+                new_doc_ents.append(ent)
+            
+        if add_candidate:
+            new_doc_ents.append(candidate_entity)
+        doc.ents = new_doc_ents
 
-    def add_entity(self, entity, key, lbl):
-        """ add a custom entity to the NER with key 'key' and label 'lbl' """
+    def add_entity(self, entity, key):
+        """ add a custom entity to the NER with key 'key' """
         terms = entity.split()
 
-        specs = [[{spacy.attrs.ORTH: term.strip()} for term in terms]]
-        self.matcher.add(entity_key=str(key), label=lbl, attrs={}, specs=specs,
-            on_match=self.merge_phrases)
+        word_specs = [{'LOWER': term.strip().lower()} for term in terms]
+        # Changed in v2.0 https://spacy.io/api/matcher#add
+        self.matcher.add(key, self.on_entity_match, word_specs)
 
     def initialize_NER_with_custom_locations(self):
         # set the custom entity to 0. We increment this number for each new entity so they have a unique identifier
-        key = 0
-        stopw = set(stopwords.words('english'))
         # reads the city file
         city_path = DATA_DIR/'cities1000.txt'
         self.logger.warning('Add custom locations from %s', city_path)
+
+        # load cities into a set, to remove duplicates
         with city_path.open(encoding='utf8') as fp:
+            cities_set = set()
             for line in fp:
                 columns = line.split('\t')
                 # gets the location name from the line just read
                 location_name = columns[1]
-                # removes city names that can be confused with a stop word (ex. Is, As)
-                # and cities with short names such as "see"
-                if location_name.lower() not in stopw and len(location_name) > 3:
-                    self.add_entity(location_name, key, 'custom_cities')
-                    # adds the entity all lower case.
-                    # This is needed so we can recognize both 'London' and 'london'
-                    self.add_entity(location_name.lower(), key, 'custom_cities')
-                    # increaments the key
-                    key += 1
+                if len(location_name) > 3:
+                    cities_set.add(location_name)
+
+        stopw = set(stopwords.words('english'))
+        # removes city names that can be confused with a stop word (ex. Is, As)
+        # and cities with short names such as "see"
+        key = 0
+        for city in cities_set:
+            if city not in stopw:
+                self.add_entity(city, key)
+                # increments the key
+                key += 1
         return key
 
     def get_entities(self, q):
@@ -114,11 +158,32 @@ class EntityRecognizerServer:
         resp = web.json_response(entities, dumps=dumps_custom)
         return resp
 
+class ExceptionWrappedCaller:
+    """Put an exception logging wrapper around all the endpoints.
+       This is preferable to using aiohttp middleware as we control 
+       that here without upstream involvement"""
+    def __init__(self, call_to_wrap):
+        self.call_to_wrap = call_to_wrap
+        self.logger = _get_logger()
+
+    async def __call__(self, *args, **kwargs):
+        try:
+            response = await self.call_to_wrap(*args, **kwargs)
+        except aiohttp.web_exceptions.HTTPException:
+            # assume if we're throwing this that it's already logged
+            raise
+        except Exception as exc:
+            self.logger.exception(
+                "Unexpected exception in call")
+
+            error_string = "Internal Server Error\n" + traceback.format_exc()
+            raise aiohttp.web_exceptions.HTTPInternalServerError(text=error_string)
+        return response
 
 def initialize_web_app(web_app, er_server):
     logger = _get_logger()
     logger.warning("Entity Recognizer initializing server.")
-    web_app.router.add_route('GET', '/ner', er_server.handle)
+    web_app.router.add_route('GET', '/ner', ExceptionWrappedCaller(er_server.handle))
 
 LOGGING_CONFIG_TEXT = """
 version: 1

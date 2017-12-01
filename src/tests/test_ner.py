@@ -42,15 +42,15 @@ def test_recognize_group(ner_server):
     assert entity.end_loc == 6
 
 def test_recognize_fac(ner_server):
-    entity_list = ner_server.get_entities("Route 66")
+    entity_list = ner_server.get_entities("Golden Gate Bridge")
     assert len(entity_list) == 1
     entity = entity_list[0]
     print(entity)
-    assert entity.entity_value == 'Route 66'
+    assert entity.entity_value == 'Golden Gate Bridge'
     assert entity.spacy_category == 'FAC'
     assert entity.category == 'sys.places'
     assert entity.start_loc == 0
-    assert entity.end_loc == 8
+    assert entity.end_loc == 18
 
 def test_recognize_org(ner_server):
     entity_list = ner_server.get_entities("Microsoft")
@@ -64,15 +64,15 @@ def test_recognize_org(ner_server):
     assert entity.end_loc == 9
 
 def test_recognize_loc(ner_server):
-    entity_list = ner_server.get_entities("Lake Tahoe")
+    entity_list = ner_server.get_entities("Rocky Mountain")
     assert len(entity_list) == 1
     entity = entity_list[0]
     print(entity)
-    assert entity.entity_value == 'Lake Tahoe'
+    assert entity.entity_value == 'Rocky Mountain'
     assert entity.spacy_category == 'LOC'
     assert entity.category == 'sys.places'
     assert entity.start_loc == 0
-    assert entity.end_loc == 10
+    assert entity.end_loc == 14
 
 def test_ignore_event(ner_server):
     entity_list = ner_server.get_entities("World War 1")
@@ -231,3 +231,23 @@ async def test_server_ner_multi_instance(cli):
     assert item['value'] == "tomorrow"
     assert item['start'] == 30
     assert item['end'] == 38
+
+async def test_server_ner_two_word_places(cli):
+    resp = await cli.get('/ner?q=Whats the weather in New York')
+    assert resp.status == 200
+    json_resp = await resp.json()
+    assert isinstance(json_resp, list)
+    assert len(json_resp) == 1
+    item = json_resp[0]
+    assert item['category'] == "sys.places"
+    assert item['value'] == "New York"
+
+async def test_server_ner_mixed_case_places(cli):
+    resp = await cli.get('/ner?q=Whats the weather in LonDON')
+    assert resp.status == 200
+    json_resp = await resp.json()
+    assert isinstance(json_resp, list)
+    assert len(json_resp) == 1
+    item = json_resp[0]
+    assert item['category'] == "sys.places"
+    assert item['value'] == "LonDON"

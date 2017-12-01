@@ -17,5 +17,5 @@ pip install --upgrade pip
 pushd ${SOURCE_DIR}
 pip install --upgrade -r requirements_test.txt
 popd
-python ${SCRIPT_DIR}/initialize_spacy_model.py
+python ${SOURCE_DIR}/initialize_spacy_model.py
 pip install -e ${SOURCE_DIR}
