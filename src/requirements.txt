@@ -3,6 +3,7 @@ spacy==2.0.3
 
 nltk==3.2.4
 aiohttp==2.3.3
+yarl==0.18.0
 elasticsearch==5.4.0
 numpy==1.13.3
 pyyaml==3.12.0
