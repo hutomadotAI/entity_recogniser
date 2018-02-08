@@ -1,8 +1,11 @@
 # Base off of the Python image
-FROM python:3.5.2-slim
+FROM python:3.5.4-slim
 LABEL maintainer "Paul Annetts <paul.annetts@hutoma.com>"
 
+RUN echo "2018-02-08" > /min_patch_date.txt
+
 RUN apt-get update \
+ && apt upgrade -y \
  && apt install -y --no-install-recommends \
   build-essential \
   wget \
