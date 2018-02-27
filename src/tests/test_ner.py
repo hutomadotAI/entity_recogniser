@@ -3,6 +3,7 @@ from aiohttp import web
 
 import hu_entity.server as hu_s
 
+
 @pytest.fixture(scope="module")
 def ner_server():
     """EntityRecognizerServer takes ages to initialize, so define a single EntityRecognizerServer
@@ -10,6 +11,7 @@ def ner_server():
     server = hu_s.EntityRecognizerServer()
     server.initialize_NER_with_custom_locations()
     return server
+
 
 def test_recognize_location(ner_server):
     entity_list = ner_server.get_entities("Reading")
@@ -21,6 +23,7 @@ def test_recognize_location(ner_server):
     assert entity.start_loc == 0
     assert entity.end_loc == 7
 
+
 def test_recognize_person(ner_server):
     entity_list = ner_server.get_entities("Who is Sherlock Holmes")
     assert len(entity_list) == 1
@@ -31,6 +34,7 @@ def test_recognize_person(ner_server):
     assert entity.start_loc == 7
     assert entity.end_loc == 22
 
+
 def test_recognize_group(ner_server):
     entity_list = ner_server.get_entities("French bread")
     assert len(entity_list) == 1
@@ -40,6 +44,7 @@ def test_recognize_group(ner_server):
     assert entity.category == 'sys.group'
     assert entity.start_loc == 0
     assert entity.end_loc == 6
+
 
 def test_recognize_fac(ner_server):
     entity_list = ner_server.get_entities("Golden Gate Bridge")
@@ -52,6 +57,7 @@ def test_recognize_fac(ner_server):
     assert entity.start_loc == 0
     assert entity.end_loc == 18
 
+
 def test_recognize_org(ner_server):
     entity_list = ner_server.get_entities("Microsoft")
     assert len(entity_list) == 1
@@ -62,6 +68,7 @@ def test_recognize_org(ner_server):
     assert entity.category == 'sys.organization'
     assert entity.start_loc == 0
     assert entity.end_loc == 9
+
 
 def test_recognize_loc(ner_server):
     entity_list = ner_server.get_entities("Rocky Mountain")
@@ -74,9 +81,11 @@ def test_recognize_loc(ner_server):
     assert entity.start_loc == 0
     assert entity.end_loc == 14
 
+
 def test_ignore_event(ner_server):
     entity_list = ner_server.get_entities("World War 1")
     assert len(entity_list) == 0
+
 
 def test_recognize_date(ner_server):
     entity_list = ner_server.get_entities("I would like to see you today")
@@ -87,6 +96,7 @@ def test_recognize_date(ner_server):
     assert entity.category == 'sys.date'
     assert entity.start_loc == 24
     assert entity.end_loc == 29
+
 
 def test_recognize_date_2(ner_server):
     entity_list = ner_server.get_entities("23rd April 1852")
@@ -99,6 +109,7 @@ def test_recognize_date_2(ner_server):
     assert entity.start_loc == 0
     assert entity.end_loc == 15
 
+
 def test_recognize_time(ner_server):
     entity_list = ner_server.get_entities("1 hour")
     assert len(entity_list) == 1
@@ -109,6 +120,7 @@ def test_recognize_time(ner_server):
     assert entity.category == 'sys.time'
     assert entity.start_loc == 0
     assert entity.end_loc == 6
+
 
 def test_recognize_percent(ner_server):
     entity_list = ner_server.get_entities("99.13%")
@@ -121,6 +133,7 @@ def test_recognize_percent(ner_server):
     assert entity.start_loc == 0
     assert entity.end_loc == 6
 
+
 def test_recognize_money_as_number(ner_server):
     entity_list = ner_server.get_entities("$23.79")
     assert len(entity_list) == 1
@@ -131,6 +144,7 @@ def test_recognize_money_as_number(ner_server):
     assert entity.category == 'sys.number'
     assert entity.start_loc == 1
     assert entity.end_loc == 6
+
 
 def test_recognize_quantity_as_number(ner_server):
     entity_list = ner_server.get_entities("79 ounces")
@@ -143,6 +157,7 @@ def test_recognize_quantity_as_number(ner_server):
     assert entity.start_loc == 0
     assert entity.end_loc == 9
 
+
 def test_recognize_ordinal(ner_server):
     entity_list = ner_server.get_entities("thirteenth")
     assert len(entity_list) == 1
@@ -153,6 +168,7 @@ def test_recognize_ordinal(ner_server):
     assert entity.category == 'sys.ordinal'
     assert entity.start_loc == 0
     assert entity.end_loc == 10
+
 
 def test_recognize_number_1(ner_server):
     entity_list = ner_server.get_entities("18")
@@ -165,6 +181,7 @@ def test_recognize_number_1(ner_server):
     assert entity.start_loc == 0
     assert entity.end_loc == 2
 
+
 def test_recognize_number_2(ner_server):
     entity_list = ner_server.get_entities("nine times")
     assert len(entity_list) == 1
@@ -176,9 +193,11 @@ def test_recognize_number_2(ner_server):
     assert entity.start_loc == 0
     assert entity.end_loc == 4
 
+
 def test_does_not_recognize_stopwords_as_city(ner_server):
     entity_list = ner_server.get_entities("London is a city")
     assert len(entity_list) == 1
+
 
 @pytest.fixture()
 def cli(loop, test_client, ner_server):
@@ -188,13 +207,16 @@ def cli(loop, test_client, ner_server):
     hu_s.initialize_web_app(web_app, ner_server)
     return loop.run_until_complete(test_client(web_app))
 
+
 async def test_server_root_404(cli):
     resp = await cli.get('/')
     assert resp.status == 404
 
+
 async def test_server_ner_no_q_400(cli):
     resp = await cli.get('/ner')
     assert resp.status == 400
+
 
 async def test_server_ner_q_1(cli):
     resp = await cli.get('/ner?q=Reading')
@@ -208,12 +230,14 @@ async def test_server_ner_q_1(cli):
     assert item['start'] == 0
     assert item['end'] == 7
 
+
 async def test_server_ner_no_entity(cli):
     resp = await cli.get('/ner?q=Nothing')
     assert resp.status == 200
     json_resp = await resp.json()
     assert isinstance(json_resp, list)
     assert len(json_resp) == 0
+
 
 async def test_server_ner_multi_instance(cli):
     resp = await cli.get('/ner?q=What weather is it in Reading tomorrow')
@@ -232,6 +256,7 @@ async def test_server_ner_multi_instance(cli):
     assert item['start'] == 30
     assert item['end'] == 38
 
+
 async def test_server_ner_two_word_places(cli):
     resp = await cli.get('/ner?q=Whats the weather in New York')
     assert resp.status == 200
@@ -241,6 +266,7 @@ async def test_server_ner_two_word_places(cli):
     item = json_resp[0]
     assert item['category'] == "sys.places"
     assert item['value'] == "New York"
+
 
 async def test_server_ner_mixed_case_places(cli):
     resp = await cli.get('/ner?q=Whats the weather in LonDON')

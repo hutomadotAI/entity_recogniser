@@ -4,6 +4,4 @@
 from setuptools import setup
 
 # as this is for testing purposes only, don't provide metadata
-setup(name='hu_entity',
-      version='0.1',
-      packages=['hu_entity'])
+setup(name='hu_entity', version='0.1', packages=['hu_entity'])

@@ -1,10 +1,9 @@
 -r requirements.txt
+
+-r requirements_code_style.txt
+
 pytest==3.4.0
 pytest-aiohttp==0.3.0
 pytest-timeout==1.2.1
 pytest-cov==2.5.1
 wget==3.2
-
-# linting tools used in VSCode
-pylint
-pep8
