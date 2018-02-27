@@ -1,8 +1,5 @@
 # Spacy version
-spacy==2.0.7
-# msgpack-python 0.5.4 had a major performance regression 
-# doubling time of load of spacy model 
-msgpack-python==0.5.2 
+spacy==2.0.9
 numpy==1.14.0
 
 nltk==3.2.5

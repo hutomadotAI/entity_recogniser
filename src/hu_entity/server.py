@@ -18,22 +18,21 @@ from hu_entity.named_entity import dumps_custom
 
 DATA_DIR = Path(os.path.dirname(os.path.realpath(__file__)) + '/data')
 
+
 def _get_logger():
     logger = logging.getLogger('hu_entity.server')
     return logger
 
+
 CUSTOM_CITIES_TAG = "custom_cities"
+
+
 def entity_to_string(ent):
     return "{{'{}', key:{}, ID:{}, at({}:{})}}".format(
-        ent,
-        ent.ent_id,
-        ent.label,
-        ent.start,
-        ent.end
-    )
+        ent, ent.ent_id, ent.label, ent.start, ent.end)
+
 
 class EntityRecognizerServer:
-
     def __init__(self, minimal_ers_mode=False):
         self.logger = _get_logger()
         # reads the spacy model
@@ -48,18 +47,18 @@ class EntityRecognizerServer:
         self.nlp.vocab[CUSTOM_CITIES_TAG]
         self.CUSTOM_CITIES_ID = self.nlp.vocab[CUSTOM_CITIES_TAG].orth
         self.GPE_ID = self.nlp.vocab['GPE'].orth
-        self.logger.warning('Entity ids: CUSTOM_CITIES={}, GPE={}'.format(self.CUSTOM_CITIES_ID, self.GPE_ID))
-
-
+        self.logger.warning('Entity ids: CUSTOM_CITIES={}, GPE={}'.format(
+            self.CUSTOM_CITIES_ID, self.GPE_ID))
 
     def on_entity_match(self, matcher, doc, i, matches):
         """ merge phrases before they are added to the NER """
         match_id, start, end = matches[i]
         span = doc[start:end]
         match_text = span.text
-        self.logger.info("Custom entity candidate match for {'%s', key:%s, ID:%s, at(%s,%s)}",
-            match_text, match_id, self.CUSTOM_CITIES_ID, start, end)        
-        
+        self.logger.info(
+            "Custom entity candidate match for {'%s', key:%s, ID:%s, at(%s,%s)}",
+            match_text, match_id, self.CUSTOM_CITIES_ID, start, end)
+
         candidate_entity = (match_id, self.CUSTOM_CITIES_ID, start, end)
         add_candidate = True
 
@@ -69,20 +68,21 @@ class EntityRecognizerServer:
             add_this_entity = True
             ent_start = ent.start
             ent_end = ent.end
-            if ((ent_start <= start and ent_end >= start) or
-                (ent_start < end and ent_end >= end)):
+            if ((ent_start <= start and ent_end >= start)
+                    or (ent_start < end and ent_end >= end)):
                 # The existing entity wins if it is longer than the candidate
                 # (at same length the candidate wins)
                 if (ent_end - ent_start) > (end - start):
                     add_candidate = False
                 else:
                     add_this_entity = False
-                self.logger.info("Candidate clashes with existing entity %s, use candidate=%s",
-                    entity_to_string(ent), add_candidate)        
-                
+                self.logger.info(
+                    "Candidate clashes with existing entity %s, use candidate=%s",
+                    entity_to_string(ent), add_candidate)
+
             if add_this_entity:
                 new_doc_ents.append(ent)
-            
+
         if add_candidate:
             new_doc_ents.append(candidate_entity)
         doc.ents = new_doc_ents
@@ -96,9 +96,10 @@ class EntityRecognizerServer:
         self.matcher.add(key, self.on_entity_match, word_specs)
 
     def initialize_NER_with_custom_locations(self):
-        # set the custom entity to 0. We increment this number for each new entity so they have a unique identifier
+        # set the custom entity to 0. We increment this number for each new entity so they
+        # have a unique identifier
         # reads the city file
-        city_path = DATA_DIR/'cities1000.txt'
+        city_path = DATA_DIR / 'cities1000.txt'
         self.logger.warning('Add custom locations from %s', city_path)
 
         # load cities into a set, to remove duplicates
@@ -132,14 +133,15 @@ class EntityRecognizerServer:
         # list of all recognized entities
         entity_list = []
         for word in doc.ents:
-            named_entity = NamedEntity(word.text, word.label_, word.start_char, word.end_char)
+            named_entity = NamedEntity(word.text, word.label_, word.start_char,
+                                       word.end_char)
             if named_entity.category is not None:
                 entity_list.append(named_entity)
             else:
-                self.logger.info("Skipping uncategorized entity %s", named_entity)
+                self.logger.info("Skipping uncategorized entity %s",
+                                 named_entity)
 
         return entity_list
-
 
     async def handle(self, request):
         '''
@@ -148,8 +150,8 @@ class EntityRecognizerServer:
         url = request.url
         q = url.query.get('q', None)
         if q is None:
-            self.logger.warning('Invalid NER request, no q query parameter, url was %s',
-                                url)
+            self.logger.warning(
+                'Invalid NER request, no q query parameter, url was %s', url)
             raise web.HTTPBadRequest()
 
         self.logger.info("Entity request '%s'", q)
@@ -158,10 +160,12 @@ class EntityRecognizerServer:
         resp = web.json_response(entities, dumps=dumps_custom)
         return resp
 
+
 class ExceptionWrappedCaller:
     """Put an exception logging wrapper around all the endpoints.
-       This is preferable to using aiohttp middleware as we control 
+       This is preferable to using aiohttp middleware as we control
        that here without upstream involvement"""
+
     def __init__(self, call_to_wrap):
         self.call_to_wrap = call_to_wrap
         self.logger = _get_logger()
@@ -173,17 +177,20 @@ class ExceptionWrappedCaller:
             # assume if we're throwing this that it's already logged
             raise
         except Exception as exc:
-            self.logger.exception(
-                "Unexpected exception in call")
+            self.logger.exception("Unexpected exception in call")
 
             error_string = "Internal Server Error\n" + traceback.format_exc()
-            raise aiohttp.web_exceptions.HTTPInternalServerError(text=error_string)
+            raise aiohttp.web_exceptions.HTTPInternalServerError(
+                text=error_string)
         return response
+
 
 def initialize_web_app(web_app, er_server):
     logger = _get_logger()
     logger.warning("Entity Recognizer initializing server.")
-    web_app.router.add_route('GET', '/ner', ExceptionWrappedCaller(er_server.handle))
+    web_app.router.add_route('GET', '/ner',
+                             ExceptionWrappedCaller(er_server.handle))
+
 
 LOGGING_CONFIG_TEXT = """
 version: 1
@@ -209,6 +216,7 @@ handlers:
     multi_process: False
 """
 
+
 def main():
     """Main function"""
     logging_config = yaml.load(LOGGING_CONFIG_TEXT)
@@ -224,7 +232,8 @@ def main():
         env_minimal_server_int = int(env_minimal_server_str)
     except ValueError:
         env_minimal_server_int = 0
-        logger.warning("ERS_MINIMAL_SERVER not set or invalid '{}'".format(env_minimal_server_str))
+        logger.warning("ERS_MINIMAL_SERVER not set or invalid '{}'".format(
+            env_minimal_server_str))
 
     er_server = EntityRecognizerServer(env_minimal_server_int)
     er_server.initialize_NER_with_custom_locations()
@@ -237,6 +246,7 @@ def main():
 
     logger.warning("Starting entity recognizer API on port %d", port)
     web.run_app(web_app, port=port)
+
 
 if __name__ == '__main__':
     main()

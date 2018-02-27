@@ -2,6 +2,8 @@
 """Script to download models"""
 import pip
 import spacy
+import sys
+
 
 def load_model(model, version):
     # dive into PIP depths to get the info about the package we need
@@ -12,7 +14,8 @@ def load_model(model, version):
         return (False, None)
     dist = dists[0]
     found_version = dist['version']
-    return(version == found_version, found_version)
+    return (version == found_version, found_version)
+
 
 def download_model(model, version):
     # Borrow from implementation of spacy's download command
@@ -25,15 +28,12 @@ def download_model(model, version):
         print("Download failed")
         sys.exit(return_code)
 
+
 if __name__ == "__main__":
     print("*** Initialize Spacy Model script")
-    LANGUAGES = [
-        ('en_core_web_sm', '2.0.0'),
-        ('en_core_web_md', '2.0.0'),
-        ('fr_core_news_sm', '2.0.0'),
-        ('it_core_news_sm', '2.0.0'),
-        ('nl_core_news_sm', '2.0.0')
-    ]
+    LANGUAGES = [('en_core_web_sm', '2.0.0'), ('en_core_web_md', '2.0.0'),
+                 ('fr_core_news_sm', '2.0.0'), ('it_core_news_sm', '2.0.0'),
+                 ('nl_core_news_sm', '2.0.0')]
 
     for model, version in LANGUAGES:
         download_model_required = True
@@ -48,4 +48,3 @@ if __name__ == "__main__":
             download_model_required = False
         if download_model_required:
             download_model(model, version)
- 
