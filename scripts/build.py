@@ -2,7 +2,6 @@
 """Script to build code"""
 import argparse
 import os
-import subprocess
 from pathlib import Path
 
 import hu_build.build_docker
@@ -11,34 +10,6 @@ from hu_build.build_docker import DockerImage
 
 SCRIPT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 ROOT_DIR = SCRIPT_PATH.parent
-
-
-class Error(Exception):
-    """Base exception for this module"""
-    pass
-
-
-class PytestError(Error):
-    """Pytest exception"""
-    pass
-
-
-def python_test(name, build_args, path, venv_location, ignore_dirs=None):
-    """Does a Pytest build from a virtual environment"""
-    venv_executable = str(venv_location / 'bin' / 'python')
-    cmdline = [
-        venv_executable, "-m", "pytest",
-        str(path), "-m", "not integration_test",
-        "--junitxml=TEST-pytest.{}.xml".format(name), "--timeout=70"
-    ]
-    if ignore_dirs is not None:
-        cmdline.append('--ignore={}'.format(ignore_dirs))
-
-    if build_args.no_test:
-        return
-    result = subprocess.run(cmdline, cwd=str(path))
-    if result.returncode != 0:
-        raise PytestError
 
 
 def main(build_args):
