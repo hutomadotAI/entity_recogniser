@@ -1,8 +1,8 @@
 # Base off of the Python image
-FROM python:3.5.4-slim
+FROM python:3.5.5-slim
 LABEL maintainer "Paul Annetts <paul.annetts@hutoma.com>"
 
-RUN echo "2018-02-08" > /min_patch_date.txt
+RUN echo "2018-04-10" > /min_patch_date.txt
 
 RUN apt-get update \
  && apt upgrade -y \

@@ -7,3 +7,10 @@ pytest-aiohttp==0.3.0
 pytest-timeout==1.2.1
 pytest-cov==2.5.1
 wget==3.2
+
+# Add the local PYPI server
+--trusted-host dev-web.hutoma.com
+--extra-index-url http://dev-web.hutoma.com:8088
+
+# add dependencies
+hu_build==0.3.29
