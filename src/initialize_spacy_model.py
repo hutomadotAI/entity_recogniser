@@ -6,17 +6,23 @@ import subprocess
 
 
 def pip_install(package):
-    subprocess.run([sys.executable, "-m", "pip", "install", "--no-cache-dir", package], check=True)
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "--no-cache-dir", package],
+        check=True)
 
 
 def pip_show(package):
-    result = subprocess.run([sys.executable, "-m", "pip", "show", package], encoding="utf8", stdout=subprocess.PIPE)
+    result = subprocess.run(
+        [sys.executable, "-m", "pip", "show", package],
+        encoding="utf8",
+        stdout=subprocess.PIPE)
     if result.returncode == 1:
         # Not found
         return None
     elif result.returncode != 0:
         # Some other issue
-        raise Exception("pip show failed with error {}".format(result.returncode))
+        raise Exception("pip show failed with error {}".format(
+            result.returncode))
 
     pip_show_text = result.stdout
 

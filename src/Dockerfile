@@ -1,8 +1,8 @@
 # Base off of the Python image
-FROM python:3.5.5-slim
+FROM python:3.6.6-slim-stretch
 LABEL maintainer "Paul Annetts <paul.annetts@hutoma.com>"
 
-RUN echo "2018-04-10" > /min_patch_date.txt
+RUN echo "2018-07-06" > /os_patch_date.txt
 
 RUN apt-get update \
  && apt upgrade -y \
@@ -13,19 +13,22 @@ RUN apt-get update \
    
 RUN pip install --no-cache-dir --upgrade pip
 
-# Copy common code
-COPY requirements.txt .
-# PIP install requirements and the spacy model
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
+# Install pipenv
+ENV PIP_NO_CACHE_DIR=false
+RUN pip install --upgrade pip pipenv
+
+# Apply the pipenv
+RUN mkdir -p /src/hu_entity/
+COPY Pipfile* setup.py /src/
+WORKDIR /src
+RUN pipenv install --system
 
 # Run script to download models for languages we require
-COPY initialize_spacy_model.py .
+COPY initialize_spacy_model.py /src/
 RUN python initialize_spacy_model.py
 
 # Copy the code
-COPY setup.py src/
-COPY hu_entity/ src/hu_entity/
-RUN pip install --no-cache-dir -e /src
+COPY hu_entity/ /src/hu_entity/
 
 #---------------------------
 # switch to non root user
