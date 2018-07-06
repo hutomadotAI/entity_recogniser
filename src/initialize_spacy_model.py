@@ -1,19 +1,38 @@
 #!/usr/bin/env python
 """Script to download models"""
-import pip
 import spacy
 import sys
+import subprocess
+
+
+def pip_install(package):
+    subprocess.run([sys.executable, "-m", "pip", "install", "--no-cache-dir", package], check=True)
+
+
+def pip_show(package):
+    result = subprocess.run([sys.executable, "-m", "pip", "show", package], encoding="utf8", stdout=subprocess.PIPE)
+    if result.returncode == 1:
+        # Not found
+        return None
+    elif result.returncode != 0:
+        # Some other issue
+        raise Exception("pip show failed with error {}".format(result.returncode))
+
+    pip_show_text = result.stdout
+
+    pip_details = {}
+    for line in pip_show_text.splitlines():
+        line_items = line.split(':', 1)
+        pip_details[line_items[0].strip()] = line_items[1].strip()
+    return pip_details
 
 
 def load_model(model, version):
-    # dive into PIP depths to get the info about the package we need
     # It's quicker to check in PIP than load it in Spacy
-    dists_expression = pip.commands.show.search_packages_info([model])
-    dists = list(dists_expression)
-    if len(dists) < 1:
+    package_details = pip_show(model)
+    if not package_details:
         return (False, None)
-    dist = dists[0]
-    found_version = dist['version']
+    found_version = package_details['Version']
     return (version == found_version, found_version)
 
 
@@ -23,10 +42,7 @@ def download_model(model, version):
     download_url = spacy.about.__download_url__ + \
         "/{m}-{v}/{m}-{v}.tar.gz".format(
             m=model, v=version)
-    return_code = pip.main(['install', '--no-cache-dir', download_url])
-    if return_code:
-        print("Download failed")
-        sys.exit(return_code)
+    pip_install(download_url)
 
 
 if __name__ == "__main__":
