@@ -10,8 +10,6 @@ RUN apt-get update \
   build-essential \
   wget \
  && rm -rf /var/lib/apt/lists/*
-   
-RUN pip install --no-cache-dir --upgrade pip
 
 # Install pipenv
 ENV PIP_NO_CACHE_DIR=false
