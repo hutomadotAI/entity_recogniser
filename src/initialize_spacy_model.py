@@ -3,6 +3,7 @@
 import spacy
 import sys
 import subprocess
+import nltk
 
 
 def pip_install(package):
@@ -70,3 +71,8 @@ if __name__ == "__main__":
             download_model_required = False
         if download_model_required:
             download_model(model, version)
+
+    print("***********************************************************")
+    print("*** nltk")
+    nltk.downloader.download("stopwords")
+    print("*************************DONE******************************")
