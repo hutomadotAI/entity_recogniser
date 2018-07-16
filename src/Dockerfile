@@ -25,9 +25,6 @@ RUN pipenv install --system
 COPY initialize_spacy_model.py /src/
 RUN python initialize_spacy_model.py
 
-# Copy the code
-COPY hu_entity/ /src/hu_entity/
-
 #---------------------------
 # switch to non root user
 # define user/group IDs as ARG
@@ -37,11 +34,15 @@ RUN addgroup --system --gid $GROUPID appuser
 RUN adduser --system --uid $USERID --gid $GROUPID appuser
 
 USER appuser
-WORKDIR /home/appuser
-
 # Get the NLTK corpus data
 RUN python -m nltk.downloader stopwords
 
+USER root
+# Copy the code
+COPY hu_entity/ /src/hu_entity/
+
+USER appuser
+WORKDIR /home/appuser
 
 # Make available port 9095
 EXPOSE 9095

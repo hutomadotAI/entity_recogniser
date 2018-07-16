@@ -54,9 +54,7 @@ def download_model(model, version):
 
 if __name__ == "__main__":
     print("*** Initialize Spacy Model script")
-    LANGUAGES = [('en_core_web_sm', '2.0.0'), ('en_core_web_md', '2.0.0'),
-                 ('fr_core_news_sm', '2.0.0'), ('it_core_news_sm', '2.0.0'),
-                 ('nl_core_news_sm', '2.0.0')]
+    LANGUAGES = [('en_core_web_sm', '2.0.0'), ('en_core_web_md', '2.0.0')]
 
     for model, version in LANGUAGES:
         download_model_required = True
