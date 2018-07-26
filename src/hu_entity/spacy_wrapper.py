@@ -88,7 +88,7 @@ class SpacyWrapper:
             add_this_entity = True
             ent_start = ent.start
             ent_end = ent.end
-            if ((ent_start <= start and ent_end >= start)
+            if ((ent_start <= start and ent_end > start)
                     or (ent_start < end and ent_end >= end)):
                 # The existing entity wins if it is longer than the candidate
                 # (at same length the candidate wins)
