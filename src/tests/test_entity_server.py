@@ -66,8 +66,8 @@ async def test_server_ner_multi_instance(cli):
     item = json_resp[1]
     assert item['category'] == "sys.date"
     assert item['value'] == "tomorrow"
-    assert item['start'] == 30
-    assert item['end'] == 38
+    assert item['start'] == 29
+    assert item['end'] == 37
 
 
 async def test_server_ner_two_word_places(cli):
