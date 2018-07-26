@@ -32,14 +32,14 @@ async def test_server_ner_no_q_400(cli):
 
 
 async def test_server_ner_q_1(cli):
-    resp = await cli.get('/ner?q=Reading')
+    resp = await cli.get('/ner?q=London')
     assert resp.status == 200
     json_resp = await resp.json()
     assert isinstance(json_resp, list)
     assert len(json_resp) == 1
     item = json_resp[0]
     assert item['category'] == "sys.places"
-    assert item['value'] == "Reading"
+    assert item['value'] == "London"
     assert item['start'] == 0
     assert item['end'] == 7
 
