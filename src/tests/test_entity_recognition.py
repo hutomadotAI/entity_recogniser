@@ -20,7 +20,7 @@ def test_recognize_location(spacy_wrapper):
     assert entity.spacy_category == 'GPE'
     assert entity.category == 'sys.places'
     assert entity.start_loc == 0
-    assert entity.end_loc == 7
+    assert entity.end_loc == 6
 
 
 def test_recognize_person(spacy_wrapper):

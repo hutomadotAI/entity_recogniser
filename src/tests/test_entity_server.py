@@ -41,7 +41,7 @@ async def test_server_ner_q_1(cli):
     assert item['category'] == "sys.places"
     assert item['value'] == "London"
     assert item['start'] == 0
-    assert item['end'] == 7
+    assert item['end'] == 6
 
 
 async def test_server_ner_no_entity(cli):
@@ -62,7 +62,7 @@ async def test_server_ner_multi_instance(cli):
     assert item['category'] == "sys.places"
     assert item['value'] == "London"
     assert item['start'] == 22
-    assert item['end'] == 29
+    assert item['end'] == 28
     item = json_resp[1]
     assert item['category'] == "sys.date"
     assert item['value'] == "tomorrow"
