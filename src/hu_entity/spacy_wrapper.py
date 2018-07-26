@@ -88,8 +88,10 @@ class SpacyWrapper:
             add_this_entity = True
             ent_start = ent.start
             ent_end = ent.end
-            if ((ent_start <= start and ent_end >= start)
-                    or (ent_start < end and ent_end >= end)):
+            if ((ent_start <= start and ent_end > start)  # ent_start <= start <= ent_end
+                    or (ent_start < end and ent_end >= end)):  # ent_start < end <= ent_end
+            # if ((start < ent_start <= end)
+            #         or (start < ent_end <= end)):
                 # The existing entity wins if it is longer than the candidate
                 # (at same length the candidate wins)
                 if (ent_end - ent_start) > (end - start):
@@ -154,28 +156,28 @@ class SpacyWrapper:
         # set the custom entity to 0. We increment this number for each new entity so they
         # have a unique identifier
         # reads the city file
-        city_path = DATA_DIR / 'cities1000.txt'
-        self.logger.warning('Add custom locations from %s', city_path)
-
-        # load cities into a set, to remove duplicates
-        with city_path.open(encoding='utf8') as fp:
-            cities_set = set()
-            for line in fp:
-                columns = line.split('\t')
-                # gets the location name from the line just read
-                location_name = columns[1]
-                if len(location_name) > 3:
-                    cities_set.add(location_name)
-
-        # removes city names that can be confused with a stop word (ex. Is, As)
-        # and cities with short names such as "see"
-        key = 0
-        for city in cities_set:
-            if city not in nltk_stopwords:
-                self.add_entity(city, key)
-                # increments the key
-                key += 1
-        return key
+        # city_path = DATA_DIR / 'cities1000.txt'
+        # self.logger.warning('Add custom locations from %s', city_path)
+        #
+        # # load cities into a set, to remove duplicates
+        # with city_path.open(encoding='utf8') as fp:
+        #     cities_set = set()
+        #     for line in fp:
+        #         columns = line.split('\t')
+        #         # gets the location name from the line just read
+        #         location_name = columns[1]
+        #         if len(location_name) > 3:
+        #             cities_set.add(location_name)
+        #
+        # # removes city names that can be confused with a stop word (ex. Is, As)
+        # # and cities with short names such as "see"
+        # key = 0
+        # for city in cities_set:
+        #     if city not in nltk_stopwords:
+        #         self.add_entity(city, key)
+        #         # increments the key
+        #         key += 1
+        # return key
 
     def get_entities(self, q):
         # gets the 'q' parameter and initiates the NLP component
