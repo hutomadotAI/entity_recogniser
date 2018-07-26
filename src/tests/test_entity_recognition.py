@@ -16,7 +16,7 @@ def test_recognize_location(spacy_wrapper):
     entity_list, _ = spacy_wrapper.get_entities("London")
     assert len(entity_list) == 1
     entity = entity_list[0]
-    assert entity.entity_value == 'Reading'
+    assert entity.entity_value == 'London'
     assert entity.spacy_category == 'GPE'
     assert entity.category == 'sys.places'
     assert entity.start_loc == 0
