@@ -14,7 +14,7 @@ numpy = {version="*", index="pypi"}
 nltk = {version="*", index="pypi"}
 aiohttp = {version="*", index="pypi"}
 pyyaml = {version="*", index="pypi"}
-
+marisa-trie = {version="*", index="pypi"}
 # internal libraries
 hu_logging = {version="*", index="hu_pypi"}
 hu_utils = {version="*", index="hu_pypi"}

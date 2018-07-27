@@ -99,3 +99,16 @@ async def test_server_tokenize(cli):
     assert isinstance(json_resp, list)
     assert len(json_resp) == 1
     assert json_resp[0] == "hi"
+
+
+async def test_server_find_entities_requires_body(cli):
+    resp = await cli.post('/findentities')
+    assert resp.status == 400
+
+
+async def test_server_find_entities(cli):
+    #resp = await cli.post('/findentities', data={'value': 'foo'})
+    resp = await cli.post('/findentities', data='{"conversation" : "a Focus is a type of car, an Apple is a fruit","entities" : [{ "cars" : [ "Fiesta", "Focus", "Golf" ] },{ "fruits" : [ "Apple", "Banana", "Pear" ] } ]}')
+    assert resp.status == 200
+    json_resp = await resp.json()
+    assert json_resp['conversation'] == "a @cars is a type of car, an @fruits is a fruit"

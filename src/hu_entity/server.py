@@ -7,11 +7,14 @@ import aiohttp
 import traceback
 from aiohttp import web
 
+import json
+
 
 import yaml
 
 from hu_entity.spacy_wrapper import SpacyWrapper
 from hu_entity.named_entity import dumps_custom
+from hu_entity.entity_finder import EntityFinder
 
 
 def _get_logger():
@@ -61,6 +64,25 @@ class EntityRecognizerServer:
         resp = web.json_response(tokens)
         return resp
 
+    async def handle_findentities(self, request):
+        '''
+        the function returns the supplied chat text with the entities identified
+        '''
+        url = request.url
+        if not request.can_read_body:
+            self.logger.warning(
+                'Invalid NER findentities request, no body found, url was %s', url)
+            raise web.HTTPBadRequest
+
+        body = await request.json()
+
+        finder = EntityFinder()
+        finder.setup_entity_values(body['entities'])
+        output = finder.replace_entity_values(body['conversation'])
+        data = {'conversation' : output}
+        resp = web.json_response(data)
+        return resp
+
 
 class ExceptionWrappedCaller:
     """Put an exception logging wrapper around all the endpoints.
@@ -93,6 +115,8 @@ def initialize_web_app(web_app, er_server):
                              ExceptionWrappedCaller(er_server.handle_ner))
     web_app.router.add_route('GET', '/tokenize',
                              ExceptionWrappedCaller(er_server.handle_tokenize))
+    web_app.router.add_route('POST', '/findentities',
+                             ExceptionWrappedCaller(er_server.handle_findentities))
 
 
 LOGGING_CONFIG_TEXT = """
