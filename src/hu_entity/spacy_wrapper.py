@@ -10,7 +10,6 @@ import spacy.matcher
 
 from hu_entity.named_entity import NamedEntity
 
-CUSTOM_CITIES_TAG = "custom_cities"
 DATA_DIR = Path(os.path.dirname(os.path.realpath(__file__)) + '/data')
 
 
@@ -61,12 +60,10 @@ class SpacyWrapper:
             self.nlp = spacy.load("en_core_web_md")
         # initialize the matcher with the model just read
         self.matcher = spacy.matcher.Matcher(self.nlp.vocab)
-        self.nlp.vocab[CUSTOM_CITIES_TAG]
-        self.CUSTOM_CITIES_ID = self.nlp.vocab[CUSTOM_CITIES_TAG].orth
         self.GPE_ID = self.nlp.vocab['GPE'].orth
         self.PERSON_ID = self.nlp.vocab['PERSON'].orth
-        self.logger.warning('Entity ids: CUSTOM_CITIES={}, GPE={}'.format(
-            self.CUSTOM_CITIES_ID, self.GPE_ID))
+        self.CUSTOM_ID = None
+        self.logger.warning('Entity ids: GPE={}'.format(self.GPE_ID))
         self.stoplist = None
         self.symbols = None
 
@@ -77,9 +74,9 @@ class SpacyWrapper:
         match_text = span.text
         self.logger.info(
             "Custom entity candidate match for {'%s', key:%s, ID:%s, at(%s,%s)}",
-            match_text, match_id, self.CUSTOM_CITIES_ID, start, end)
+            match_text, match_id, self.CUSTOM_ID, start, end)
 
-        candidate_entity = (match_id, self.CUSTOM_CITIES_ID, start, end)
+        candidate_entity = (match_id, self.CUSTOM_ID, start, end)
         add_candidate = True
 
         # scan through existing entities and decide whether we want to keep them
@@ -150,32 +147,6 @@ class SpacyWrapper:
         self.tokenizer_symbols = [char for char in string.punctuation] + [
             "-----", "---", "...", "“", "”", '"', "'ve"
         ]
-
-        # set the custom entity to 0. We increment this number for each new entity so they
-        # have a unique identifier
-        # reads the city file
-        city_path = DATA_DIR / 'cities1000.txt'
-        self.logger.warning('Add custom locations from %s', city_path)
-
-        # load cities into a set, to remove duplicates
-        with city_path.open(encoding='utf8') as fp:
-            cities_set = set()
-            for line in fp:
-                columns = line.split('\t')
-                # gets the location name from the line just read
-                location_name = columns[1]
-                if len(location_name) > 3:
-                    cities_set.add(location_name)
-
-        # removes city names that can be confused with a stop word (ex. Is, As)
-        # and cities with short names such as "see"
-        key = 0
-        for city in cities_set:
-            if city not in nltk_stopwords:
-                self.add_entity(city, key)
-                # increments the key
-                key += 1
-        return key
 
     def get_entities(self, q):
         # gets the 'q' parameter and initiates the NLP component

@@ -18,8 +18,6 @@ ENTITY_CATEGORY_MAPPING = {
     "QUANTITY": "sys.number",
     "ORDINAL": "sys.ordinal",
     "CARDINAL": "sys.number",
-    # custom entities we added
-    "custom_cities": "sys.places",
 }
 
 
