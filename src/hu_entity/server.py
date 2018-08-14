@@ -53,13 +53,15 @@ class EntityRecognizerServer:
         '''
         url = request.url
         q = url.query.get('q', None)
+        filter_ents = url.query.get('filter_ents')
+        sw_size = url.query.get('sw_size')
         if q is None:
             self.logger.warning(
                 'Invalid NER request, no q query parameter, url was %s', url)
             raise web.HTTPBadRequest()
 
         self.logger.info("Tokenize request '%s'", q)
-        tokens = self.spacy_wrapper.tokenize(q)
+        tokens = self.spacy_wrapper.tokenize(q, filter_ents, sw_size)
         self.logger.info("Tokens found: '%s'", tokens)
         resp = web.json_response(tokens)
         return resp

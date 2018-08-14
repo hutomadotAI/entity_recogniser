@@ -139,9 +139,11 @@ class SpacyWrapper:
             'whom'
         ])
 
-        self.tokenizer_stoplist = (nltk_stopwords | custom_stoplist
+        self.tokenizer_stoplist_large = (nltk_stopwords | custom_stoplist
                                    | set(["n't", "'s", "'m", "ca"
-                                          ])) - excluded_tokenizer_stopwords
+                                          ]))
+
+        self.tokenizer_stoplist = self.tokenizer_stoplist_large - excluded_tokenizer_stopwords
 
         # List of symbols we don't care about
         self.tokenizer_symbols = [char for char in string.punctuation] + [
@@ -166,6 +168,12 @@ class SpacyWrapper:
                 self.logger.info("Skipping uncategorized entity %s",
                                  named_entity)
 
+        for word in q.split():
+            if word.startswith('@'):
+                named_entity = NamedEntity(word, 'custom_entity', q.find(word),
+                                           q.find(word) + len(word))
+                entity_list.append(named_entity)
+
         return (entity_list, doc)
 
     def filter_tokens(self, tokens, test_function, fallback_string):
@@ -186,7 +194,7 @@ class SpacyWrapper:
 
         return filtered_tokens
 
-    def lemma_and_remove_stopwords(self, tokens):
+    def lemma_and_remove_stopwords(self, tokens, sw_size):
         # lemmatize what's left
         lemmas = []
         for tok in tokens:
@@ -201,16 +209,21 @@ class SpacyWrapper:
         tokens = [tok for tok in tokens if tok not in self.tokenizer_symbols]
 
         # stoplist the tokens
-        tmp = [tok for tok in tokens if tok not in self.tokenizer_stoplist]
+        sw = self.tokenizer_stoplist if sw_size != 'large' else self.tokenizer_stoplist_large
+        tmp = [tok for tok in tokens if tok not in sw]
         if len(tmp) > 0:
             tokens = tmp
         return tokens
 
-    def tokenize(self, sample: str):
+    def tokenize(self, sample: str, filter_ents: str, sw_size: str):
         _, tokens = self.get_entities(sample)
-        tokens = self.filter_tokens(tokens, is_number_token, "NUM")
-        tokens = self.filter_tokens(
-            tokens, lambda token: is_entity_token_type(token, self.PERSON_ID),
-            "PERSON")
-        tokens = self.lemma_and_remove_stopwords(tokens)
+        self.logger.info("filter_ents is {}".format(filter_ents))
+        if filter_ents == 'True':
+            tokens = self.filter_tokens(tokens, is_number_token, "NUM")
+            self.logger.info("removed numbers: {}".format(tokens))
+            tokens = self.filter_tokens(
+                tokens, lambda token: is_entity_token_type(token, self.PERSON_ID),
+                "PERSON")
+            self.logger.info("removed persons: {}".format(tokens))
+        tokens = self.lemma_and_remove_stopwords(tokens, sw_size)
         return tokens
