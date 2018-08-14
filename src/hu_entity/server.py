@@ -81,7 +81,27 @@ class EntityRecognizerServer:
         finder = EntityFinder()
         finder.setup_entity_values(body['entities'])
         output = finder.replace_entity_values(body['conversation'])
-        data = {'conversation' : output}
+        data = {'conversation': output}
+        resp = web.json_response(data)
+        return resp
+
+    async def handle_addentities(self, request):
+        """
+        this function allows to add entities to spacy matcher
+
+        entity_value: str; value to add to entity category
+        entity_key: str; category to which entity_value should be added
+        """
+        url = request.url
+        if not request.can_read_body:
+            self.logger.warning(
+                'Invalid NER findentities request, no body found, url was %s', url)
+            raise web.HTTPBadRequest
+
+        body = await request.json()
+        self.spacy_wrapper.add_entity(body['entity_value'],
+                                      body['entity_key'])
+        data = {'success': 'True'}
         resp = web.json_response(data)
         return resp
 
@@ -119,6 +139,8 @@ def initialize_web_app(web_app, er_server):
                              ExceptionWrappedCaller(er_server.handle_tokenize))
     web_app.router.add_route('POST', '/findentities',
                              ExceptionWrappedCaller(er_server.handle_findentities))
+    web_app.router.add_route('GET', '/addentities',
+                             ExceptionWrappedCaller(er_server.handle_addentities))
 
 
 LOGGING_CONFIG_TEXT = """

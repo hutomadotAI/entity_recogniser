@@ -62,21 +62,20 @@ class SpacyWrapper:
         self.matcher = spacy.matcher.Matcher(self.nlp.vocab)
         self.GPE_ID = self.nlp.vocab['GPE'].orth
         self.PERSON_ID = self.nlp.vocab['PERSON'].orth
-        self.CUSTOM_ID = None
         self.logger.warning('Entity ids: GPE={}'.format(self.GPE_ID))
         self.stoplist = None
         self.symbols = None
 
-    def on_entity_match(self, matcher, doc, i, matches):
+    def on_entity_match(self, matcher, doc, i, matches, entity_id):
         """ merge phrases before they are added to the NER """
         match_id, start, end = matches[i]
         span = doc[start:end]
         match_text = span.text
         self.logger.info(
             "Custom entity candidate match for {'%s', key:%s, ID:%s, at(%s,%s)}",
-            match_text, match_id, self.CUSTOM_ID, start, end)
+            match_text, match_id, entity_id, start, end)
 
-        candidate_entity = (match_id, self.CUSTOM_ID, start, end)
+        candidate_entity = (match_id, entity_id, start, end)
         add_candidate = True
 
         # scan through existing entities and decide whether we want to keep them
@@ -85,8 +84,8 @@ class SpacyWrapper:
             add_this_entity = True
             ent_start = ent.start
             ent_end = ent.end
-            if ((ent_start <= start and ent_end > start)
-                    or (ent_start < end and ent_end >= end)):
+            if ((ent_start <= start < ent_end)
+                    or (ent_start < end <= ent_end)):
                 # The existing entity wins if it is longer than the candidate
                 # (at same length the candidate wins)
                 if (ent_end - ent_start) > (end - start):
@@ -106,11 +105,14 @@ class SpacyWrapper:
 
     def add_entity(self, entity, key):
         """ add a custom entity to the NER with key 'key' """
+        custom_id = self.nlp.vocab[key].orth
         terms = entity.split()
 
         word_specs = [{'LOWER': term.strip().lower()} for term in terms]
         # Changed in v2.0 https://spacy.io/api/matcher#add
-        self.matcher.add(key, self.on_entity_match, word_specs)
+        self.matcher.add(entity,
+                         lambda m, d, i, ms: self.on_entity_match(m, d, i, ms, entity_id=custom_id),
+                         word_specs)
 
     def initialize(self):
         # A custom stoplist taken from sklearn.feature_extraction.stop_words import
@@ -161,18 +163,18 @@ class SpacyWrapper:
         entity_list = []
         for word in doc.ents:
             named_entity = NamedEntity(word.text, word.label_, word.start_char,
-                                       word.end_char)
+                                       word.end_char, sys_category=word.label_ if word.label_.startswith("@") else None)
             if named_entity.category is not None:
                 entity_list.append(named_entity)
             else:
                 self.logger.info("Skipping uncategorized entity %s",
                                  named_entity)
 
-        for word in q.split():
-            if word.startswith('@'):
-                named_entity = NamedEntity(word, 'custom_entity', q.find(word),
-                                           q.find(word) + len(word))
-                entity_list.append(named_entity)
+        # for word in q.split():
+        #     if word.startswith('@'):
+        #         named_entity = NamedEntity(word, 'custom_entity', q.find(word),
+        #                                    q.find(word) + len(word))
+        #         entity_list.append(named_entity)
 
         return (entity_list, doc)
 
