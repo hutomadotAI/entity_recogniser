@@ -99,6 +99,7 @@ class EntityRecognizerServer:
             raise web.HTTPBadRequest
 
         body = await request.json()
+        self.logger.info("adding {} for category {}".format(body['entity_value'], body['entity_key']))
         self.spacy_wrapper.add_entity(body['entity_value'],
                                       body['entity_key'])
         data = {'success': 'True'}
@@ -139,7 +140,7 @@ def initialize_web_app(web_app, er_server):
                              ExceptionWrappedCaller(er_server.handle_tokenize))
     web_app.router.add_route('POST', '/findentities',
                              ExceptionWrappedCaller(er_server.handle_findentities))
-    web_app.router.add_route('GET', '/addentities',
+    web_app.router.add_route('POST', '/addentities',
                              ExceptionWrappedCaller(er_server.handle_addentities))
 
 

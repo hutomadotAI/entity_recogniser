@@ -109,6 +109,8 @@ class SpacyWrapper:
         terms = entity.split()
 
         word_specs = [{'LOWER': term.strip().lower()} for term in terms]
+        self.logger.info("custom_id for {} is {}".format(key, custom_id))
+        self.logger.info("word_specs: {}".format(word_specs))
         # Changed in v2.0 https://spacy.io/api/matcher#add
         self.matcher.add(entity,
                          lambda m, d, i, ms: self.on_entity_match(m, d, i, ms, entity_id=custom_id),
@@ -158,12 +160,14 @@ class SpacyWrapper:
 
         # instantiate the NER matcher
         self.matcher(doc)
-
+        self.logger.info("entities: {}".format(doc.ents))
         # list of all recognized entities
         entity_list = []
         for word in doc.ents:
             named_entity = NamedEntity(word.text, word.label_, word.start_char,
-                                       word.end_char, sys_category=word.label_ if word.label_.startswith("@") else None)
+                                       word.end_char,
+                                       sys_category=word.label_
+                                       if word.label_.startswith("@") or word.label_.startswith("sys.") else None)
             if named_entity.category is not None:
                 entity_list.append(named_entity)
             else:
@@ -219,7 +223,6 @@ class SpacyWrapper:
 
     def tokenize(self, sample: str, filter_ents: str, sw_size: str):
         _, tokens = self.get_entities(sample)
-        self.logger.info("filter_ents is {}".format(filter_ents))
         if filter_ents == 'True':
             tokens = self.filter_tokens(tokens, is_number_token, "NUM")
             self.logger.info("removed numbers: {}".format(tokens))
