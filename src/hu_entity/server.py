@@ -80,8 +80,9 @@ class EntityRecognizerServer:
 
         finder = EntityFinder()
         finder.setup_entity_values(body['entities'])
-        output = finder.replace_entity_values(body['conversation'])
-        data = {'conversation': output}
+
+        output, values = finder.replace_entity_values(body['conversation'])
+        data = {'conversation': output, 'entities': values}
         resp = web.json_response(data)
         return resp
 

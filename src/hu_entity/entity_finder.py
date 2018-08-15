@@ -8,29 +8,34 @@ class EntityFinder:
         self.entity_tries = {}
 
     def setup_entity_values(self, entities):
-        for entity in entities:
-            for entity_name, entity_values in entity.items():
-                self.entity_tries[entity_name] = marisa_trie.Trie(entity_values)
+        for entity_name, entity_values in entities.items():
+            self.entity_tries[entity_name] = marisa_trie.Trie(entity_values)
 
     def replace_entity_values(self, conversation):
         words = conversation.split()
         corrected_words = []
+        values = {}
 
         for word in words:
-            matches = []
+            matches = {}
             for entity_name, entity_trie in self.entity_tries.items():
                 if word in entity_trie:
-                    matches.append(entity_name)
+                    matches[entity_name] = word
 
             if len(matches) == 0:
                 corrected_words.append(word)
             elif len(matches) == 1:
-                corrected_words.append('@' + matches[0])
+                n, v = matches.popitem()
+                corrected_words.append('@' + n)
+                values[n] = v
             else:
-                # What is the
+                # What is the correct way to handle duplicates?
                 corrected_words.append(word)
 
         # Construct return string
         output_text = ' '
         output_text = output_text.join(corrected_words)
-        return output_text
+        return output_text, values
+
+        # Construct entity values data
+
