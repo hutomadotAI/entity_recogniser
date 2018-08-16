@@ -1,5 +1,6 @@
 import json
 import marisa_trie
+from collections import defaultdict
 
 
 class EntityFinder:
@@ -14,7 +15,7 @@ class EntityFinder:
     def replace_entity_values(self, conversation):
         words = conversation.split()
         corrected_words = []
-        values = {}
+        values = defaultdict(list)
 
         for word in words:
             matches = {}
@@ -27,7 +28,7 @@ class EntityFinder:
             elif len(matches) == 1:
                 n, v = matches.popitem()
                 corrected_words.append('@' + n)
-                values[n] = v
+                values[n].append(v)
             else:
                 # What is the correct way to handle duplicates?
                 corrected_words.append(word)
@@ -36,6 +37,3 @@ class EntityFinder:
         output_text = ' '
         output_text = output_text.join(corrected_words)
         return output_text, values
-
-        # Construct entity values data
-

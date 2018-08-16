@@ -112,6 +112,6 @@ async def test_server_find_entities(cli):
     json_resp = await resp.json()
     assert json_resp['conversation'] == "a @cars is a type of car, an @fruits is a fruit"
     values = json_resp['entities']
-    assert values['cars'] == "Focus"
-    assert values['fruits'] == "Apple"
+    assert next(iter(values['cars'])) == "Focus"
+    assert next(iter(values['fruits'])) == "Apple"
     assert len(values) == 2
