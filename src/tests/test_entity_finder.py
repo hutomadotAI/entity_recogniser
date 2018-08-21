@@ -40,6 +40,23 @@ def test_entity_finder_multiple_matches():
     assert(next(iter(found_values["CakeType"])) == "carrot")
 
 
+def test_entity_finder_duplicate_matches():
+    finder = EntityFinder()
+    values = setup_data()
+    finder.setup_entity_values(values)
+    found_text, found_values = finder.replace_entity_values("I want a chocolate cake and a chocolate biscuit")
+    # This matches multiple, but unfortunately there's no order guarantee so it could match either
+    cake = (found_text == "I want a @CakeType cake and a @CakeType biscuit")
+    biscuit = (found_text == "I want a @Biscuit cake and a @Biscuit biscuit")
+    assert(cake or biscuit)
+    if cake:
+        assert(len(found_values["CakeType"]) == 1)
+        assert(next(iter(found_values["CakeType"])) == "chocolate")
+    if biscuit:
+        assert(len(found_values["Biscuit"]) == 1)
+        assert(next(iter(found_values["Biscuit"])) == "chocolate")
+
+
 def test_entity_finder_multiple_value_matches():
     finder = EntityFinder()
     values = setup_data()
@@ -92,5 +109,6 @@ def test_entity_finder_split_message():
 def setup_data():
     values = {"CakeSize": ["Large", "Medium", "Tiny"],
               "CakeType": ["Carrot", "Chocolate", "Coffee", "Sponge"],
-              "Drinks": ["Coffee", "Beer", "Red Wine", "White Wine"]}
+              "Drinks": ["Coffee", "Beer", "Red Wine", "White Wine"],
+              "Biscuit": ["Rich Tea", "Digestive", "Chocolate"]}
     return values

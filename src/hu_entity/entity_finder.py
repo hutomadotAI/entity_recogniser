@@ -39,8 +39,8 @@ class EntityFinder:
         # Construct return values
         for entity_value, entity_names in matches.items():
             # length 0 means no matches, do nothing
-            # for now, also dont do anything if there's duplicates
-            if len(entity_names) == 1:
+            # for now, if there's duplicates just return the any match
+            if len(entity_names) >= 1:
                 entity_name = next(iter(entity_names))
                 entity_name_string = "@" + entity_name
                 value_to_replace = entity_value
