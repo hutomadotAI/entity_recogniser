@@ -225,9 +225,10 @@ class SpacyWrapper:
             sw = self.tokenizer_stoplist_large
         else:
             sw = self.tokenizer_stoplist
-        tmp = [tok for tok in tokens if tok not in sw]
-        if len(tmp) > 0:
-            tokens = tmp
+        tokens = [tok for tok in tokens if tok not in sw]
+        
+        if len(tokens) == 0:
+            tokens = ['UNK']
         return tokens
 
     def tokenize(self, sample: str, filter_ents: str, sw_size: str):
