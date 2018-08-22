@@ -8,6 +8,8 @@ from nltk.corpus import stopwords
 import spacy
 import spacy.matcher
 
+sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
+
 from hu_entity.named_entity import NamedEntity
 
 DATA_DIR = Path(os.path.dirname(os.path.realpath(__file__)) + '/data')
@@ -119,7 +121,7 @@ class SpacyWrapper:
     def initialize(self):
         # A custom stoplist taken from sklearn.feature_extraction.stop_words import
         # ENGLISH_STOP_WORDS
-        custom_stoplist = set([
+        custom_stoplist = {
             'much', 'herein', 'thru', 'per', 'somehow', 'throughout', 'almost',
             'somewhere', 'whereafter', 'nevertheless', 'indeed', 'hereby',
             'across', 'within', 'co', 'yet', 'elsewhere', 'whence', 'seeming',
@@ -135,17 +137,19 @@ class SpacyWrapper:
             'however', 'whereas', 'although', 'hereafter', 'already',
             'beforehand', 'etc', 'whenever', 'even', 'someone', 'whereupon',
             'inc', 'sometimes', 'ltd', 'cant'
-        ])
+        }
         nltk_stopwords = set(stopwords.words('english'))
 
-        excluded_tokenizer_stopwords = set([
+        excluded_tokenizer_stopwords = {
             'why', 'when', 'where', 'why', 'how', 'which', 'what', 'whose',
             'whom'
-        ])
+        }
+
+        self.tokenizer_stoplist_xlarge = (nltk_stopwords | ENGLISH_STOP_WORDS
+                                         | {"n't", "'s", "'m", "ca"})
 
         self.tokenizer_stoplist_large = (nltk_stopwords | custom_stoplist
-                                   | set(["n't", "'s", "'m", "ca"
-                                          ]))
+                                   | {"n't", "'s", "'m", "ca"})
 
         self.tokenizer_stoplist = self.tokenizer_stoplist_large - excluded_tokenizer_stopwords
 
@@ -215,7 +219,12 @@ class SpacyWrapper:
         tokens = [tok for tok in tokens if tok not in self.tokenizer_symbols]
 
         # stoplist the tokens
-        sw = self.tokenizer_stoplist if sw_size != 'large' else self.tokenizer_stoplist_large
+        if sw_size == 'xlarge':
+            sw = self.tokenizer_stoplist_xlarge
+        elif sw_size == 'large':
+            sw = self.tokenizer_stoplist_large
+        else:
+            sw = self.tokenizer_stoplist
         tmp = [tok for tok in tokens if tok not in sw]
         if len(tmp) > 0:
             tokens = tmp
