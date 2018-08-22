@@ -8,7 +8,7 @@ from nltk.corpus import stopwords
 import spacy
 import spacy.matcher
 
-sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
+from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 
 from hu_entity.named_entity import NamedEntity
 
