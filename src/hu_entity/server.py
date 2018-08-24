@@ -79,8 +79,8 @@ class EntityRecognizerServer:
         self.logger.info("Find entity request")
         finder = EntityFinder()
         finder.setup_entity_values(body['entities'])
-        output, values = finder.replace_entity_values(body['conversation'])
-        data = {'conversation': output, 'entities': values }
+        values = finder.replace_entity_values(body['conversation'])
+        data = {'conversation': body['conversation'], 'entities': values }
         resp = web.json_response(data)
         return resp
 
