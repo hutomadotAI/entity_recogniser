@@ -7,12 +7,9 @@ import aiohttp
 import traceback
 from aiohttp import web
 
-import json
-
-
 import yaml
 
-from hu_entity.spacy_wrapper import SpacyWrapper
+from hu_entity.spacy_wrapper import SpacyWrapper, StopWordSize
 from hu_entity.named_entity import dumps_custom
 from hu_entity.entity_finder import EntityFinder
 
@@ -26,10 +23,10 @@ class EntityRecognizerServer:
     def __init__(self, minimal_ers_mode=False):
         self.logger = _get_logger()
         self.spacy_wrapper = SpacyWrapper(minimal_ers_mode)
-    
+
     def initialize(self):
         self.spacy_wrapper.initialize()
-        
+
     async def handle_ner(self, request):
         '''
         the function returns a collection of recognized entities as JSON response
@@ -53,8 +50,18 @@ class EntityRecognizerServer:
         '''
         url = request.url
         q = url.query.get('q', None)
-        filter_ents = url.query.get('filter_ents')
-        sw_size = url.query.get('sw_size')
+        filter_ents_str = url.query.get('filter_ents')
+        sw_size_str = url.query.get('sw_size')
+        if filter_ents_str is not None and filter_ents_str.lower() == "true":
+            filter_ents = True
+        else:
+            filter_ents = False
+
+        if sw_size_str is None:
+            sw_size = StopWordSize.DEFAULT
+        else:
+            sw_size = StopWordSize[sw_size_str]
+
         if q is None:
             self.logger.warning(
                 'Invalid NER request, no q query parameter, url was %s', url)
@@ -73,7 +80,8 @@ class EntityRecognizerServer:
         url = request.url
         if not request.can_read_body:
             self.logger.warning(
-                'Invalid NER findentities request, no body found, url was %s', url)
+                'Invalid NER findentities request, no body found, url was %s',
+                url)
             raise web.HTTPBadRequest
 
         body = await request.json()
@@ -97,13 +105,14 @@ class EntityRecognizerServer:
         url = request.url
         if not request.can_read_body:
             self.logger.warning(
-                'Invalid NER findentities request, no body found, url was %s', url)
+                'Invalid NER findentities request, no body found, url was %s',
+                url)
             raise web.HTTPBadRequest
 
         body = await request.json()
-        self.logger.info("adding {} for category {}".format(body['entity_value'], body['entity_key']))
-        self.spacy_wrapper.add_entity(body['entity_value'],
-                                      body['entity_key'])
+        self.logger.info("adding {} for category {}".format(
+            body['entity_value'], body['entity_key']))
+        self.spacy_wrapper.add_entity(body['entity_value'], body['entity_key'])
         data = {'success': 'True'}
         resp = web.json_response(data)
         return resp
@@ -140,10 +149,12 @@ def initialize_web_app(web_app, er_server):
                              ExceptionWrappedCaller(er_server.handle_ner))
     web_app.router.add_route('GET', '/tokenize',
                              ExceptionWrappedCaller(er_server.handle_tokenize))
-    web_app.router.add_route('POST', '/findentities',
-                             ExceptionWrappedCaller(er_server.handle_findentities))
-    web_app.router.add_route('POST', '/addentities',
-                             ExceptionWrappedCaller(er_server.handle_addentities))
+    web_app.router.add_route(
+        'POST', '/findentities',
+        ExceptionWrappedCaller(er_server.handle_findentities))
+    web_app.router.add_route(
+        'POST', '/addentities',
+        ExceptionWrappedCaller(er_server.handle_addentities))
 
 
 LOGGING_CONFIG_TEXT = """
