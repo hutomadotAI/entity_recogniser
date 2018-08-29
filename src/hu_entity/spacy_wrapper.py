@@ -18,7 +18,7 @@ DATA_DIR = Path(os.path.dirname(os.path.realpath(__file__)) + '/data')
 
 class StopWordSize(enum.Enum):
     """Stopword size"""
-    DEFAULT = 1
+    SMALL = 1
     LARGE = 2
     XLARGE = 3
 
@@ -239,7 +239,7 @@ class SpacyWrapper:
             sw = self.tokenizer_stoplist_xlarge
         elif sw_size is StopWordSize.LARGE:
             sw = self.tokenizer_stoplist_large
-        elif sw_size is StopWordSize.DEFAULT:
+        elif sw_size is StopWordSize.SMALL:
             sw = self.tokenizer_stoplist
         else:
             raise SpacyException("Invalid StopWordSize {}".format(sw_size))

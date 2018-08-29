@@ -58,7 +58,7 @@ class EntityRecognizerServer:
             filter_ents = False
 
         if sw_size_str is None:
-            sw_size = StopWordSize.DEFAULT
+            sw_size = StopWordSize.SMALL
         else:
             sw_size = StopWordSize[sw_size_str.upper()]
 
