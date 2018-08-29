@@ -60,7 +60,7 @@ class EntityRecognizerServer:
         if sw_size_str is None:
             sw_size = StopWordSize.DEFAULT
         else:
-            sw_size = StopWordSize[sw_size_str]
+            sw_size = StopWordSize[sw_size_str.upper()]
 
         if q is None:
             self.logger.warning(
