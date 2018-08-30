@@ -24,35 +24,19 @@ class EntityFinder:
     def replace_entity_values(self, conversation):
         # Construct the list of values to match against
         words_to_find = self.split_message(conversation)
-        values = defaultdict(list)
-        matches = defaultdict(set)
-        matches_to_replace = defaultdict(list)
+        entity_matches = defaultdict(list)
+        words_matched = set()
 
         for word in words_to_find:
             compare_word = word.lower()
             compare_word = compare_word.strip(self.punctuation)
-            for entity_name, entity_trie in self.entity_tries.items():
-                if compare_word in entity_trie:
-                    matches[compare_word].add(entity_name)
-                    matches_to_replace[compare_word].append(word)
+            if word not in words_matched:
+                for entity_name, entity_trie in self.entity_tries.items():
+                    if compare_word in entity_trie:
+                        entity_matches[compare_word].append(entity_name)
+                        words_matched.add(compare_word)
 
-        # Construct return values
-        for entity_value, entity_names in matches.items():
-            # length 0 means no matches, do nothing
-            # for now, also dont do anything if there's duplicates
-            if len(entity_names) == 1:
-                entity_name = next(iter(entity_names))
-                entity_name_string = "@" + entity_name
-                value_to_replace = entity_value
-                value_to_replace = value_to_replace.strip(self.punctuation)
-
-                # Replace the values in the conversation string
-                for word_to_replace in matches_to_replace[entity_value]:
-                    conversation = conversation.replace(word_to_replace.strip(self.punctuation), entity_name_string)
-                # Store the entity data
-                values[entity_name].append(value_to_replace)
-
-        return conversation, values
+        return entity_matches
 
     def split_message(self, conversation):
         conversation_words = conversation.split()
