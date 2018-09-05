@@ -1,3 +1,4 @@
+# flake8: noqa
 import pytest
 
 import hu_entity.spacy_wrapper
@@ -54,4 +55,3 @@ def test_anonymise_floating_point_2_not_replaced(spacy_wrapper):
     result = spacy_wrapper.tokenize("1,234.50")
     assert len(result) == 1
     assert result[0] == "1,234.50"
-

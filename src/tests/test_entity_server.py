@@ -1,3 +1,4 @@
+# flake8: noqa
 import pytest
 from aiohttp import web
 import hu_entity.server

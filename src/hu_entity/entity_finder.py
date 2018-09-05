@@ -1,4 +1,3 @@
-import json
 import marisa_trie
 import string
 from collections import defaultdict

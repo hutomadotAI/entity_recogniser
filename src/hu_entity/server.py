@@ -7,9 +7,6 @@ import aiohttp
 import traceback
 from aiohttp import web
 
-import json
-
-
 import yaml
 
 from hu_entity.spacy_wrapper import SpacyWrapper
@@ -26,10 +23,10 @@ class EntityRecognizerServer:
     def __init__(self, minimal_ers_mode=False):
         self.logger = _get_logger()
         self.spacy_wrapper = SpacyWrapper(minimal_ers_mode)
-    
+
     def initialize(self):
         self.spacy_wrapper.initialize()
-        
+
     async def handle_ner(self, request):
         '''
         the function returns a collection of recognized entities as JSON response
@@ -80,7 +77,7 @@ class EntityRecognizerServer:
         finder = EntityFinder()
         finder.setup_entity_values(body['entities'])
         values = finder.replace_entity_values(body['conversation'])
-        data = {'conversation': body['conversation'], 'entities': values }
+        data = {'conversation': body['conversation'], 'entities': values}
         resp = web.json_response(data)
         return resp
 

@@ -1,3 +1,4 @@
+# flake8: noqa
 import pytest
 
 import hu_entity.spacy_wrapper
