@@ -91,3 +91,7 @@ ENV/
 
 TEST-pytest*.xml
 .vscode/
+
+.idea/
+.xml
+.iml

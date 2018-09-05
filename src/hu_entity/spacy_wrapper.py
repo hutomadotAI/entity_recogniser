@@ -127,9 +127,10 @@ class SpacyWrapper:
         self.logger.info("custom_id for {} is {}".format(key, custom_id))
         self.logger.info("word_specs: {}".format(word_specs))
         # Changed in v2.0 https://spacy.io/api/matcher#add
-        self.matcher.add(entity,
-                         lambda m, d, i, ms: self.on_entity_match(m, d, i, ms, entity_id=custom_id),
-                         word_specs)
+        self.matcher.add(
+            entity,
+            lambda m, d, i, ms: self.on_entity_match(m, d, i, ms, entity_id=custom_id),
+            word_specs)
 
     def initialize(self):
         # A custom stoplist taken from sklearn.feature_extraction.stop_words import

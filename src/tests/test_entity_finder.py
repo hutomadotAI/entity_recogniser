@@ -1,4 +1,5 @@
 import pytest
+
 from hu_entity.entity_finder import EntityFinder
 
 
