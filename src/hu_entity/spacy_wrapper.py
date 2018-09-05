@@ -186,20 +186,12 @@ class SpacyWrapper:
                 word.text,
                 word.label_,
                 word.start_char,
-                word.end_char,
-                sys_category=word.label_ if word.label_.startswith("@")
-                or word.label_.startswith("sys.") else None)
+                word.end_char)
             if named_entity.category is not None:
                 entity_list.append(named_entity)
             else:
                 self.logger.info("Skipping uncategorized entity %s",
                                  named_entity)
-
-        # for word in q.split():
-        #     if word.startswith('@'):
-        #         named_entity = NamedEntity(word, 'custom_entity', q.find(word),
-        #                                    q.find(word) + len(word))
-        #         entity_list.append(named_entity)
 
         return (entity_list, doc)
 

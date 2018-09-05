@@ -27,10 +27,10 @@ class NamedEntity(object):
     Class holding the basic entity defintion
     """
 
-    def __init__(self, entity_value, spacy_category, start_loc, end_loc, sys_category=None):
+    def __init__(self, entity_value, spacy_category, start_loc, end_loc):
         self.entity_value = entity_value
         self.spacy_category = spacy_category
-        self.category = ENTITY_CATEGORY_MAPPING.get(spacy_category, sys_category)
+        self.category = ENTITY_CATEGORY_MAPPING.get(spacy_category, None)
         self.start_loc = start_loc
         self.end_loc = end_loc
 
