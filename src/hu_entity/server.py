@@ -89,12 +89,12 @@ class EntityRecognizerServer:
         self.logger.info("Find entity request")
         finder = EntityFinder()
         finder.setup_entity_values(body['entities'])
-        
+
         values = finder.replace_entity_values(body['conversation'])
         data = {'conversation': body['conversation'], 'entities': values }
         resp = web.json_response(data)
         return resp
-        
+
     async def handle_addentities(self, request):
         """
         this function allows to add entities to spacy matcher
