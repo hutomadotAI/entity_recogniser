@@ -9,7 +9,7 @@ from aiohttp import web
 
 import yaml
 
-from hu_entity.spacy_wrapper import SpacyWrapper
+from hu_entity.spacy_wrapper import SpacyWrapper, StopWordSize
 from hu_entity.named_entity import dumps_custom
 from hu_entity.entity_finder import EntityFinder
 
@@ -50,13 +50,25 @@ class EntityRecognizerServer:
         '''
         url = request.url
         q = url.query.get('q', None)
+        filter_ents_str = url.query.get('filter_ents')
+        sw_size_str = url.query.get('sw_size')
+        if filter_ents_str is not None and filter_ents_str.lower() == "true":
+            filter_ents = True
+        else:
+            filter_ents = False
+
+        if sw_size_str is None:
+            sw_size = StopWordSize.SMALL
+        else:
+            sw_size = StopWordSize[sw_size_str.upper()]
+
         if q is None:
             self.logger.warning(
                 'Invalid NER request, no q query parameter, url was %s', url)
             raise web.HTTPBadRequest()
 
         self.logger.info("Tokenize request '%s'", q)
-        tokens = self.spacy_wrapper.tokenize(q)
+        tokens = self.spacy_wrapper.tokenize(q, filter_ents, sw_size)
         self.logger.info("Tokens found: '%s'", tokens)
         resp = web.json_response(tokens)
         return resp
@@ -68,7 +80,8 @@ class EntityRecognizerServer:
         url = request.url
         if not request.can_read_body:
             self.logger.warning(
-                'Invalid NER findentities request, no body found, url was %s', url)
+                'Invalid NER findentities request, no body found, url was %s',
+                url)
             raise web.HTTPBadRequest
 
         body = await request.json()
@@ -76,6 +89,7 @@ class EntityRecognizerServer:
         self.logger.info("Find entity request")
         finder = EntityFinder()
         finder.setup_entity_values(body['entities'])
+
         values = finder.replace_entity_values(body['conversation'])
         data = {'conversation': body['conversation'], 'entities': values}
         resp = web.json_response(data)
@@ -113,8 +127,9 @@ def initialize_web_app(web_app, er_server):
                              ExceptionWrappedCaller(er_server.handle_ner))
     web_app.router.add_route('GET', '/tokenize',
                              ExceptionWrappedCaller(er_server.handle_tokenize))
-    web_app.router.add_route('POST', '/findentities',
-                             ExceptionWrappedCaller(er_server.handle_findentities))
+    web_app.router.add_route(
+        'POST', '/findentities',
+        ExceptionWrappedCaller(er_server.handle_findentities))
 
 
 LOGGING_CONFIG_TEXT = """

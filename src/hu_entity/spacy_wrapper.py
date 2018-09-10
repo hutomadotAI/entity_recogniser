@@ -1,4 +1,5 @@
 import logging
+import enum
 from pathlib import Path
 import os
 import string
@@ -8,9 +9,22 @@ from nltk.corpus import stopwords
 import spacy
 import spacy.matcher
 
+from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
+
 from hu_entity.named_entity import NamedEntity
 
 DATA_DIR = Path(os.path.dirname(os.path.realpath(__file__)) + '/data')
+
+
+class StopWordSize(enum.Enum):
+    """Stopword size"""
+    SMALL = 1
+    LARGE = 2
+    XLARGE = 3
+
+
+class SpacyException(Exception):
+    pass
 
 
 def _get_logger():
@@ -38,6 +52,7 @@ def is_entity_token_type(token, entity_type):
 
 class PlaceholderToken:
     """Placeholder token for fallback, emulate a spacy.tokens.Token"""
+
     def __init__(self, text, pos):
         self.text = text
         self.ent_type = -1
@@ -62,21 +77,20 @@ class SpacyWrapper:
         self.matcher = spacy.matcher.Matcher(self.nlp.vocab)
         self.GPE_ID = self.nlp.vocab['GPE'].orth
         self.PERSON_ID = self.nlp.vocab['PERSON'].orth
-        self.CUSTOM_ID = None
         self.logger.warning('Entity ids: GPE={}'.format(self.GPE_ID))
         self.stoplist = None
         self.symbols = None
 
-    def on_entity_match(self, matcher, doc, i, matches):
+    def on_entity_match(self, matcher, doc, i, matches, entity_id):
         """ merge phrases before they are added to the NER """
         match_id, start, end = matches[i]
         span = doc[start:end]
         match_text = span.text
         self.logger.info(
             "Custom entity candidate match for {'%s', key:%s, ID:%s, at(%s,%s)}",
-            match_text, match_id, self.CUSTOM_ID, start, end)
+            match_text, match_id, entity_id, start, end)
 
-        candidate_entity = (match_id, self.CUSTOM_ID, start, end)
+        candidate_entity = (match_id, entity_id, start, end)
         add_candidate = True
 
         # scan through existing entities and decide whether we want to keep them
@@ -85,8 +99,8 @@ class SpacyWrapper:
             add_this_entity = True
             ent_start = ent.start
             ent_end = ent.end
-            if ((ent_start <= start and ent_end > start)
-                    or (ent_start < end and ent_end >= end)):
+            if ((ent_start <= start < ent_end)
+                    or (ent_start < end <= ent_end)):
                 # The existing entity wins if it is longer than the candidate
                 # (at same length the candidate wins)
                 if (ent_end - ent_start) > (end - start):
@@ -106,16 +120,22 @@ class SpacyWrapper:
 
     def add_entity(self, entity, key):
         """ add a custom entity to the NER with key 'key' """
+        custom_id = self.nlp.vocab[key].orth
         terms = entity.split()
 
         word_specs = [{'LOWER': term.strip().lower()} for term in terms]
+        self.logger.info("custom_id for {} is {}".format(key, custom_id))
+        self.logger.info("word_specs: {}".format(word_specs))
         # Changed in v2.0 https://spacy.io/api/matcher#add
-        self.matcher.add(key, self.on_entity_match, word_specs)
+        self.matcher.add(
+            entity,
+            lambda m, d, i, ms: self.on_entity_match(m, d, i, ms, entity_id=custom_id),
+            word_specs)
 
     def initialize(self):
         # A custom stoplist taken from sklearn.feature_extraction.stop_words import
         # ENGLISH_STOP_WORDS
-        custom_stoplist = set([
+        custom_stoplist = {
             'much', 'herein', 'thru', 'per', 'somehow', 'throughout', 'almost',
             'somewhere', 'whereafter', 'nevertheless', 'indeed', 'hereby',
             'across', 'within', 'co', 'yet', 'elsewhere', 'whence', 'seeming',
@@ -131,17 +151,21 @@ class SpacyWrapper:
             'however', 'whereas', 'although', 'hereafter', 'already',
             'beforehand', 'etc', 'whenever', 'even', 'someone', 'whereupon',
             'inc', 'sometimes', 'ltd', 'cant'
-        ])
+        }
         nltk_stopwords = set(stopwords.words('english'))
 
-        excluded_tokenizer_stopwords = set([
+        excluded_tokenizer_stopwords = {
             'why', 'when', 'where', 'why', 'how', 'which', 'what', 'whose',
             'whom'
-        ])
+        }
 
-        self.tokenizer_stoplist = (nltk_stopwords | custom_stoplist
-                                   | set(["n't", "'s", "'m", "ca"
-                                          ])) - excluded_tokenizer_stopwords
+        self.tokenizer_stoplist_xlarge = (nltk_stopwords | ENGLISH_STOP_WORDS
+                                          | {"n't", "'s", "'m", "ca"})
+
+        self.tokenizer_stoplist_large = (nltk_stopwords | custom_stoplist
+                                         | {"n't", "'s", "'m", "ca"})
+
+        self.tokenizer_stoplist = self.tokenizer_stoplist_large - excluded_tokenizer_stopwords
 
         # List of symbols we don't care about
         self.tokenizer_symbols = [char for char in string.punctuation] + [
@@ -154,12 +178,15 @@ class SpacyWrapper:
 
         # instantiate the NER matcher
         self.matcher(doc)
-
+        self.logger.info("entities: {}".format(doc.ents))
         # list of all recognized entities
         entity_list = []
         for word in doc.ents:
-            named_entity = NamedEntity(word.text, word.label_, word.start_char,
-                                       word.end_char)
+            named_entity = NamedEntity(
+                word.text,
+                word.label_,
+                word.start_char,
+                word.end_char)
             if named_entity.category is not None:
                 entity_list.append(named_entity)
             else:
@@ -186,7 +213,7 @@ class SpacyWrapper:
 
         return filtered_tokens
 
-    def lemma_and_remove_stopwords(self, tokens):
+    def lemma_and_remove_stopwords(self, tokens, sw_size):
         # lemmatize what's left
         lemmas = []
         for tok in tokens:
@@ -201,16 +228,29 @@ class SpacyWrapper:
         tokens = [tok for tok in tokens if tok not in self.tokenizer_symbols]
 
         # stoplist the tokens
-        tmp = [tok for tok in tokens if tok not in self.tokenizer_stoplist]
-        if len(tmp) > 0:
-            tokens = tmp
+        if sw_size is StopWordSize.XLARGE:
+            sw = self.tokenizer_stoplist_xlarge
+        elif sw_size is StopWordSize.LARGE:
+            sw = self.tokenizer_stoplist_large
+        elif sw_size is StopWordSize.SMALL:
+            sw = self.tokenizer_stoplist
+        else:
+            raise SpacyException("Invalid StopWordSize {}".format(sw_size))
+        tokens = [tok for tok in tokens if tok not in sw]
+
+        if len(tokens) == 0:
+            tokens = ['UNK']
         return tokens
 
-    def tokenize(self, sample: str):
+    def tokenize(self, sample: str, filter_ents: bool, sw_size: StopWordSize):
         _, tokens = self.get_entities(sample)
-        tokens = self.filter_tokens(tokens, is_number_token, "NUM")
-        tokens = self.filter_tokens(
-            tokens, lambda token: is_entity_token_type(token, self.PERSON_ID),
-            "PERSON")
-        tokens = self.lemma_and_remove_stopwords(tokens)
+        if filter_ents:
+            tokens = self.filter_tokens(tokens, is_number_token, "NUM")
+            self.logger.info("removed numbers: {}".format(tokens))
+            tokens = self.filter_tokens(
+                tokens,
+                lambda token: is_entity_token_type(token, self.PERSON_ID),
+                "PERSON")
+            self.logger.info("removed persons: {}".format(tokens))
+        tokens = self.lemma_and_remove_stopwords(tokens, sw_size)
         return tokens

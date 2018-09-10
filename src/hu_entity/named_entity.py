@@ -18,6 +18,7 @@ ENTITY_CATEGORY_MAPPING = {
     "QUANTITY": "sys.number",
     "ORDINAL": "sys.ordinal",
     "CARDINAL": "sys.number",
+    "custom_entity": "sys.custom"
 }
 
 
