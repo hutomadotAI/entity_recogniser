@@ -20,12 +20,22 @@ def _get_logger():
 
 
 class EntityRecognizerServer:
-    def __init__(self, minimal_ers_mode=False):
+    def __init__(self, minimal_ers_mode=False, language='en'):
         self.logger = _get_logger()
-        self.spacy_wrapper = SpacyWrapper(minimal_ers_mode)
+        self.spacy_wrapper = SpacyWrapper(minimal_ers_mode, language)
 
     def initialize(self):
         self.spacy_wrapper.initialize()
+
+    async def reload(self, request):
+        """
+        allows loading a spacy model with, e.g. a different language
+        """
+        url = request.url
+        size = url.query.get('minimal_ers_mode', 0)
+        lang = url.query.get('lang', 'en')
+        self.spacy_wrapper.reload_model(minimal_ers_mode=size,
+                                        language=lang)
 
     async def handle_ner(self, request):
         '''
@@ -130,6 +140,8 @@ def initialize_web_app(web_app, er_server):
     web_app.router.add_route(
         'POST', '/findentities',
         ExceptionWrappedCaller(er_server.handle_findentities))
+    web_app.router.add_route('GET', '/reload',
+                             ExceptionWrappedCaller(er_server.reload))
 
 
 LOGGING_CONFIG_TEXT = """
