@@ -64,7 +64,7 @@ class PlaceholderToken:
 
 
 class SpacyWrapper:
-    def __init__(self, minimal_ers_mode=False, language='en'):
+    def __init__(self, minimal_ers_mode="False", language='en'):
         self.logger = _get_logger()
         # reads the spacy model
         self.nlp = self.__load_model(minimal_ers_mode, language)
@@ -76,7 +76,7 @@ class SpacyWrapper:
         self.stoplist = None
         self.symbols = None
 
-    def reload_model(self, minimal_ers_mode, language):
+    async def reload_model(self, minimal_ers_mode, language):
         # reads the spacy model
         self.nlp = self.__load_model(minimal_ers_mode, language)
         # initialize the matcher with the model just read
@@ -84,9 +84,10 @@ class SpacyWrapper:
         self.GPE_ID = self.nlp.vocab['GPE'].orth
         self.PERSON_ID = self.nlp.vocab['PERSON'].orth
         self.initialize(language)
+        return 0
 
     def __load_model(self, minimal_ers_mode, language):
-        if minimal_ers_mode:
+        if minimal_ers_mode == "True":
             self.logger.warning("Loading minimal model in {}...".format(language))
             if language == 'es':
                 model = "es_core_news_sm"

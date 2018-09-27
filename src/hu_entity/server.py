@@ -32,10 +32,11 @@ class EntityRecognizerServer:
         allows loading a spacy model with, e.g. a different language
         """
         url = request.url
-        size = url.query.get('minimal_ers_mode', 0)
-        lang = url.query.get('lang', 'en')
-        self.spacy_wrapper.reload_model(minimal_ers_mode=size,
-                                        language=lang)
+        size = url.query.get('minimal_ers_mode')
+        lang = url.query.get('lang')
+        await self.spacy_wrapper.reload_model(minimal_ers_mode=size,
+                                              language=lang)
+        return web.Response(status=200)
 
     async def handle_ner(self, request):
         '''
