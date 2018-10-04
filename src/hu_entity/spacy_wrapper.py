@@ -76,7 +76,7 @@ class SpacyWrapper:
         self.stoplist = None
         self.symbols = None
 
-    async def reload_model(self, minimal_ers_mode, language):
+    def reload_model(self, minimal_ers_mode, language):
         # reads the spacy model
         self.nlp = self.__load_model(minimal_ers_mode, language)
         # initialize the matcher with the model just read

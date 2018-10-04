@@ -34,8 +34,8 @@ class EntityRecognizerServer:
         url = request.url
         size = url.query.get('minimal_ers_mode')
         lang = url.query.get('lang')
-        await self.spacy_wrapper.reload_model(minimal_ers_mode=size,
-                                              language=lang)
+        self.spacy_wrapper.reload_model(minimal_ers_mode=size,
+                                        language=lang)
         return web.Response(status=200)
 
     async def handle_ner(self, request):
