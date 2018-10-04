@@ -179,6 +179,7 @@ def main():
 
     web_app = web.Application()
     env_minimal_server_str = os.environ.get("ERS_MINIMAL_SERVER", "")
+    env_language = os.environ.get("ERS_LANGUAGE", "en")
 
     logger = _get_logger()
     try:
@@ -188,7 +189,8 @@ def main():
         logger.warning("ERS_MINIMAL_SERVER not set or invalid '{}'".format(
             env_minimal_server_str))
 
-    er_server = EntityRecognizerServer(env_minimal_server_int)
+    er_server = EntityRecognizerServer(env_minimal_server_int,
+                                       language=env_language)
     er_server.initialize()
 
     initialize_web_app(web_app, er_server)
