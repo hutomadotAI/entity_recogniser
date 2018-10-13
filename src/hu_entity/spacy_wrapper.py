@@ -103,6 +103,8 @@ class SpacyWrapper:
                     "Loading model in {} (fallback minimal model)...".format(
                         language))
                 model = language_models[0]
+
+        self.logger.info("Loading Spacy model {}...".format(model))
         return spacy.load(model)
 
     def on_entity_match(self, matcher, doc, i, matches, entity_id):
