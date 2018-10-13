@@ -87,38 +87,34 @@ class SpacyWrapper:
         return 0
 
     def __load_model(self, minimal_ers_mode, language):
+        model_lookup = {
+            "en": ["en_core_web_sm", "en_core_web_md"],
+            "es": ["es_core_news_sm", "es_core_news_md"],
+            "fr": ["fr_core_news_sm", "fr_core_news_md"],
+            "pt": ["pt_core_news_sm"],
+            "it": ["it_core_news_sm"],
+            "nl": ["nl_core_news_sm"]
+        }
+
+        try:
+            language_models = model_lookup[language]
+        except (KeyError) as exc:
+            raise SpacyException(
+                "Language {} is not available".format(language))
+
         if minimal_ers_mode == "True":
-            self.logger.warning("Loading minimal model in {}...".format(language))
-            if language == 'es':
-                model = "es_core_news_sm"
-            elif language == 'en':
-                model = "en_core_web_sm"
-            elif language == 'pt':
-                model = "pt_core_news_sm"
-            elif language == 'it':
-                model = "it_core_news_sm"
-            elif language == 'fr':
-                model = "fr_core_news_sm"
-            elif language == 'nl':
-                model = "nl_core_news_sm"
-            else:
-                NotImplementedError("language not yet available")
+            self.logger.warning(
+                "Loading minimal model for {}...".format(language))
+            model = language_models[language][0]
         else:
-            self.logger.warning("Loading full model in {}...".format(language))
-            if language == 'es':
-                model = "es_core_news_md"
-            elif language == 'en':
-                model = "en_core_web_md"
-            elif language == 'pt':
-                model = "pt_core_news_sm"
-            elif language == 'it':
-                model = "it_core_news_sm"
-            elif language == 'fr':
-                model = "fr_core_news_md"
-            elif language == 'nl':
-                model = "nl_core_news_sm"
+            if len(language_models) > 1:
+                self.logger.warning("Loading model in {}...".format(language))
+                model = language_models[1]
             else:
-                NotImplementedError("language not yet available")
+                self.logger.warning(
+                    "Loading model in {} (fallback minimal model)...".format(
+                        language))
+                model = language_models[0]
         return spacy.load(model)
 
     def on_entity_match(self, matcher, doc, i, matches, entity_id):
@@ -177,21 +173,22 @@ class SpacyWrapper:
         # ENGLISH_STOP_WORDS
         if language == 'en':
             custom_stoplist = {
-                'much', 'herein', 'thru', 'per', 'somehow', 'throughout', 'almost',
-                'somewhere', 'whereafter', 'nevertheless', 'indeed', 'hereby',
-                'across', 'within', 'co', 'yet', 'elsewhere', 'whence', 'seeming',
-                'un', 'whither', 'mine', 'whether', 'also', 'thus', 'amongst',
-                'thereafter', 'mostly', 'amoungst', 'therefore', 'seems',
-                'something', 'thereby', 'others', 'hereupon', 'us', 'everyone',
-                'perhaps', 'please', 'hence', 'due', 'seemed', 'else', 'beside',
-                'therein', 'couldnt', 'moreover', 'anyway', 'whatever', 'anyhow',
-                'de', 'among', 'besides', 'though', 'either', 'rather', 'might',
-                'noone', 'eg', 'thereupon', 'may', 'namely', 'ie', 'sincere',
-                'whereby', 'con', 'latterly', 'becoming', 'meanwhile',
-                'afterwards', 'thence', 'whoever', 'otherwise', 'anything',
-                'however', 'whereas', 'although', 'hereafter', 'already',
-                'beforehand', 'etc', 'whenever', 'even', 'someone', 'whereupon',
-                'inc', 'sometimes', 'ltd', 'cant'
+                'much', 'herein', 'thru', 'per', 'somehow', 'throughout',
+                'almost', 'somewhere', 'whereafter', 'nevertheless', 'indeed',
+                'hereby', 'across', 'within', 'co', 'yet', 'elsewhere',
+                'whence', 'seeming', 'un', 'whither', 'mine', 'whether',
+                'also', 'thus', 'amongst', 'thereafter', 'mostly', 'amoungst',
+                'therefore', 'seems', 'something', 'thereby', 'others',
+                'hereupon', 'us', 'everyone', 'perhaps', 'please', 'hence',
+                'due', 'seemed', 'else', 'beside', 'therein', 'couldnt',
+                'moreover', 'anyway', 'whatever', 'anyhow', 'de', 'among',
+                'besides', 'though', 'either', 'rather', 'might', 'noone',
+                'eg', 'thereupon', 'may', 'namely', 'ie', 'sincere', 'whereby',
+                'con', 'latterly', 'becoming', 'meanwhile', 'afterwards',
+                'thence', 'whoever', 'otherwise', 'anything', 'however',
+                'whereas', 'although', 'hereafter', 'already', 'beforehand',
+                'etc', 'whenever', 'even', 'someone', 'whereupon', 'inc',
+                'sometimes', 'ltd', 'cant'
             }
             nltk_stopwords = set(stopwords.words('english'))
 
@@ -200,7 +197,8 @@ class SpacyWrapper:
                 'whom'
             }
 
-            self.tokenizer_stoplist_xlarge = (nltk_stopwords | ENGLISH_STOP_WORDS
+            self.tokenizer_stoplist_xlarge = (nltk_stopwords
+                                              | ENGLISH_STOP_WORDS
                                               | {"n't", "'s", "'m", "ca"})
 
             self.tokenizer_stoplist_large = (nltk_stopwords | custom_stoplist
@@ -238,11 +236,8 @@ class SpacyWrapper:
         # list of all recognized entities
         entity_list = []
         for word in doc.ents:
-            named_entity = NamedEntity(
-                word.text,
-                word.label_,
-                word.start_char,
-                word.end_char)
+            named_entity = NamedEntity(word.text, word.label_, word.start_char,
+                                       word.end_char)
             if named_entity.category is not None:
                 entity_list.append(named_entity)
             else:
