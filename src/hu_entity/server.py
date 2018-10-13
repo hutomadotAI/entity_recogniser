@@ -36,7 +36,7 @@ class EntityRecognizerServer:
         lang = url.query.get('lang')
         self.spacy_wrapper.reload_model(minimal_ers_mode=size,
                                         language=lang)
-        return web.Response(status=200)
+        return web.Response()
 
     async def handle_ner(self, request):
         '''
@@ -141,7 +141,7 @@ def initialize_web_app(web_app, er_server):
     web_app.router.add_route(
         'POST', '/findentities',
         ExceptionWrappedCaller(er_server.handle_findentities))
-    web_app.router.add_route('GET', '/reload',
+    web_app.router.add_route('POST', '/reload',
                              ExceptionWrappedCaller(er_server.reload))
 
 
