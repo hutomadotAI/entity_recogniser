@@ -38,6 +38,12 @@ class EntityRecognizerServer:
                                         language=lang)
         return web.Response()
 
+    async def health(self, request):
+        """
+        health endpoint, just respond 200
+        """
+        return web.Response()
+
     async def handle_ner(self, request):
         '''
         the function returns a collection of recognized entities as JSON response
@@ -134,6 +140,8 @@ class ExceptionWrappedCaller:
 def initialize_web_app(web_app, er_server):
     logger = _get_logger()
     logger.warning("Entity Recognizer initializing server.")
+    web_app.router.add_route('GET', '/health',
+                             ExceptionWrappedCaller(er_server.health))
     web_app.router.add_route('GET', '/ner',
                              ExceptionWrappedCaller(er_server.handle_ner))
     web_app.router.add_route('GET', '/tokenize',
