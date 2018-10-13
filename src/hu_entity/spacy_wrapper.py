@@ -66,25 +66,13 @@ class PlaceholderToken:
 class SpacyWrapper:
     def __init__(self, minimal_ers_mode="False", language='en'):
         self.logger = _get_logger()
-        # reads the spacy model
-        self.nlp = self.__load_model(minimal_ers_mode, language)
-        # initialize the matcher with the model just read
-        self.matcher = spacy.matcher.Matcher(self.nlp.vocab)
-        self.GPE_ID = self.nlp.vocab['GPE'].orth
-        self.PERSON_ID = self.nlp.vocab['PERSON'].orth
-        self.logger.warning('Entity ids: GPE={}'.format(self.GPE_ID))
-        self.stoplist = None
-        self.symbols = None
+        self.minimal_ers_mode = minimal_ers_mode
+        self.language = language
 
     def reload_model(self, minimal_ers_mode, language):
-        # reads the spacy model
-        self.nlp = self.__load_model(minimal_ers_mode, language)
-        # initialize the matcher with the model just read
-        self.matcher = spacy.matcher.Matcher(self.nlp.vocab)
-        self.GPE_ID = self.nlp.vocab['GPE'].orth
-        self.PERSON_ID = self.nlp.vocab['PERSON'].orth
-        self.initialize(language)
-        return 0
+        self.minimal_ers_mode = minimal_ers_mode
+        self.language = language
+        self.initialize()
 
     def __load_model(self, minimal_ers_mode, language):
         model_lookup = {
@@ -168,10 +156,19 @@ class SpacyWrapper:
             lambda m, d, i, ms: self.on_entity_match(m, d, i, ms, entity_id=custom_id),
             word_specs)
 
-    def initialize(self, language='en'):
-        # A custom stoplist taken from sklearn.feature_extraction.stop_words import
-        # ENGLISH_STOP_WORDS
+    def initialize(self):
+        # reads the spacy model
+        self.nlp = self.__load_model(self.minimal_ers_mode, self.language)
+        # initialize the matcher with the model just read
+        self.matcher = spacy.matcher.Matcher(self.nlp.vocab)
+        self.GPE_ID = self.nlp.vocab['GPE'].orth
+        self.PERSON_ID = self.nlp.vocab['PERSON'].orth
+        self.logger.warning('Entity ids: GPE={}'.format(self.GPE_ID))
+
+        language = self.language
         if language == 'en':
+            # A custom stoplist taken from sklearn.feature_extraction.stop_words import
+            # ENGLISH_STOP_WORDS
             custom_stoplist = {
                 'much', 'herein', 'thru', 'per', 'somehow', 'throughout',
                 'almost', 'somewhere', 'whereafter', 'nevertheless', 'indeed',

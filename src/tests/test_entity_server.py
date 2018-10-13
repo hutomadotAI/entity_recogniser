@@ -82,17 +82,6 @@ async def test_server_ner_two_word_places(cli):
     assert item['value'] == "New York"
 
 
-async def test_server_ner_mixed_case_places(cli):
-    resp = await cli.get('/ner?q=Whats the weather in LonDON')
-    assert resp.status == 200
-    json_resp = await resp.json()
-    assert isinstance(json_resp, list)
-    assert len(json_resp) == 1
-    item = json_resp[0]
-    assert item['category'] == "sys.places"
-    assert item['value'] == "LonDON"
-
-
 async def test_server_tokenize(cli):
     resp = await cli.get('/tokenize?q=hi')
     assert resp.status == 200
