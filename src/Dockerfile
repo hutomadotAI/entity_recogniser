@@ -13,7 +13,7 @@ RUN apt-get update \
 
 # Install pipenv
 ENV PIP_NO_CACHE_DIR=false
-RUN pip install --upgrade pip pipenv
+RUN pip install --upgrade pip==18.1 pipenv==2018.10.13
 
 # Apply the pipenv
 RUN mkdir -p /src/hu_entity/
