@@ -20,12 +20,29 @@ def _get_logger():
 
 
 class EntityRecognizerServer:
-    def __init__(self, minimal_ers_mode=False):
+    def __init__(self, minimal_ers_mode=False, language='en'):
         self.logger = _get_logger()
-        self.spacy_wrapper = SpacyWrapper(minimal_ers_mode)
+        self.spacy_wrapper = SpacyWrapper(minimal_ers_mode, language)
 
     def initialize(self):
         self.spacy_wrapper.initialize()
+
+    async def reload(self, request):
+        """
+        allows loading a spacy model with, e.g. a different language
+        """
+        url = request.url
+        size = url.query.get('minimal_ers_mode')
+        lang = url.query.get('lang')
+        self.spacy_wrapper.reload_model(minimal_ers_mode=size,
+                                        language=lang)
+        return web.Response()
+
+    async def health(self, request):
+        """
+        health endpoint, just respond 200
+        """
+        return web.Response()
 
     async def handle_ner(self, request):
         '''
@@ -123,6 +140,8 @@ class ExceptionWrappedCaller:
 def initialize_web_app(web_app, er_server):
     logger = _get_logger()
     logger.warning("Entity Recognizer initializing server.")
+    web_app.router.add_route('GET', '/health',
+                             ExceptionWrappedCaller(er_server.health))
     web_app.router.add_route('GET', '/ner',
                              ExceptionWrappedCaller(er_server.handle_ner))
     web_app.router.add_route('GET', '/tokenize',
@@ -130,6 +149,8 @@ def initialize_web_app(web_app, er_server):
     web_app.router.add_route(
         'POST', '/findentities',
         ExceptionWrappedCaller(er_server.handle_findentities))
+    web_app.router.add_route('POST', '/reload',
+                             ExceptionWrappedCaller(er_server.reload))
 
 
 LOGGING_CONFIG_TEXT = """
@@ -166,6 +187,7 @@ def main():
 
     web_app = web.Application()
     env_minimal_server_str = os.environ.get("ERS_MINIMAL_SERVER", "")
+    env_language = os.environ.get("ERS_LANGUAGE", "en")
 
     logger = _get_logger()
     try:
@@ -175,7 +197,8 @@ def main():
         logger.warning("ERS_MINIMAL_SERVER not set or invalid '{}'".format(
             env_minimal_server_str))
 
-    er_server = EntityRecognizerServer(env_minimal_server_int)
+    er_server = EntityRecognizerServer(env_minimal_server_int,
+                                       language=env_language)
     er_server.initialize()
 
     initialize_web_app(web_app, er_server)

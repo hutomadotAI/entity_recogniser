@@ -64,22 +64,48 @@ class PlaceholderToken:
 
 
 class SpacyWrapper:
-    def __init__(self, minimal_ers_mode=False):
+    def __init__(self, minimal_ers_mode="False", language='en'):
         self.logger = _get_logger()
-        # reads the spacy model
-        if minimal_ers_mode:
-            self.logger.warning("Loading minimal model...")
-            self.nlp = spacy.load("en_core_web_sm")
+        self.minimal_ers_mode = minimal_ers_mode
+        self.language = language
+
+    def reload_model(self, minimal_ers_mode, language):
+        self.minimal_ers_mode = minimal_ers_mode
+        self.language = language
+        self.initialize()
+
+    def __load_model(self, minimal_ers_mode, language):
+        model_lookup = {
+            "en": ["en_core_web_sm", "en_core_web_md"],
+            "es": ["es_core_news_sm", "es_core_news_md"],
+            "fr": ["fr_core_news_sm", "fr_core_news_md"],
+            "pt": ["pt_core_news_sm"],
+            "it": ["it_core_news_sm"],
+            "nl": ["nl_core_news_sm"]
+        }
+
+        try:
+            language_models = model_lookup[language]
+        except (KeyError) as exc:
+            raise SpacyException(
+                "Language {} is not available".format(language))
+
+        if minimal_ers_mode == "True":
+            self.logger.warning(
+                "Loading minimal model for {}...".format(language))
+            model = language_models[language][0]
         else:
-            self.logger.warning("Loading full model...")
-            self.nlp = spacy.load("en_core_web_md")
-        # initialize the matcher with the model just read
-        self.matcher = spacy.matcher.Matcher(self.nlp.vocab)
-        self.GPE_ID = self.nlp.vocab['GPE'].orth
-        self.PERSON_ID = self.nlp.vocab['PERSON'].orth
-        self.logger.warning('Entity ids: GPE={}'.format(self.GPE_ID))
-        self.stoplist = None
-        self.symbols = None
+            if len(language_models) > 1:
+                self.logger.warning("Loading model in {}...".format(language))
+                model = language_models[1]
+            else:
+                self.logger.warning(
+                    "Loading model in {} (fallback minimal model)...".format(
+                        language))
+                model = language_models[0]
+
+        self.logger.info("Loading Spacy model {}...".format(model))
+        return spacy.load(model)
 
     def on_entity_match(self, matcher, doc, i, matches, entity_id):
         """ merge phrases before they are added to the NER """
@@ -133,39 +159,66 @@ class SpacyWrapper:
             word_specs)
 
     def initialize(self):
-        # A custom stoplist taken from sklearn.feature_extraction.stop_words import
-        # ENGLISH_STOP_WORDS
-        custom_stoplist = {
-            'much', 'herein', 'thru', 'per', 'somehow', 'throughout', 'almost',
-            'somewhere', 'whereafter', 'nevertheless', 'indeed', 'hereby',
-            'across', 'within', 'co', 'yet', 'elsewhere', 'whence', 'seeming',
-            'un', 'whither', 'mine', 'whether', 'also', 'thus', 'amongst',
-            'thereafter', 'mostly', 'amoungst', 'therefore', 'seems',
-            'something', 'thereby', 'others', 'hereupon', 'us', 'everyone',
-            'perhaps', 'please', 'hence', 'due', 'seemed', 'else', 'beside',
-            'therein', 'couldnt', 'moreover', 'anyway', 'whatever', 'anyhow',
-            'de', 'among', 'besides', 'though', 'either', 'rather', 'might',
-            'noone', 'eg', 'thereupon', 'may', 'namely', 'ie', 'sincere',
-            'whereby', 'con', 'latterly', 'becoming', 'meanwhile',
-            'afterwards', 'thence', 'whoever', 'otherwise', 'anything',
-            'however', 'whereas', 'although', 'hereafter', 'already',
-            'beforehand', 'etc', 'whenever', 'even', 'someone', 'whereupon',
-            'inc', 'sometimes', 'ltd', 'cant'
-        }
-        nltk_stopwords = set(stopwords.words('english'))
+        # reads the spacy model
+        self.nlp = self.__load_model(self.minimal_ers_mode, self.language)
+        # initialize the matcher with the model just read
+        self.matcher = spacy.matcher.Matcher(self.nlp.vocab)
+        self.GPE_ID = self.nlp.vocab['GPE'].orth
+        self.PERSON_ID = self.nlp.vocab['PERSON'].orth
+        self.logger.warning('Entity ids: GPE={}'.format(self.GPE_ID))
 
-        excluded_tokenizer_stopwords = {
-            'why', 'when', 'where', 'why', 'how', 'which', 'what', 'whose',
-            'whom'
-        }
+        language = self.language
+        if language == 'en':
+            # A custom stoplist taken from sklearn.feature_extraction.stop_words import
+            # ENGLISH_STOP_WORDS
+            custom_stoplist = {
+                'much', 'herein', 'thru', 'per', 'somehow', 'throughout',
+                'almost', 'somewhere', 'whereafter', 'nevertheless', 'indeed',
+                'hereby', 'across', 'within', 'co', 'yet', 'elsewhere',
+                'whence', 'seeming', 'un', 'whither', 'mine', 'whether',
+                'also', 'thus', 'amongst', 'thereafter', 'mostly', 'amoungst',
+                'therefore', 'seems', 'something', 'thereby', 'others',
+                'hereupon', 'us', 'everyone', 'perhaps', 'please', 'hence',
+                'due', 'seemed', 'else', 'beside', 'therein', 'couldnt',
+                'moreover', 'anyway', 'whatever', 'anyhow', 'de', 'among',
+                'besides', 'though', 'either', 'rather', 'might', 'noone',
+                'eg', 'thereupon', 'may', 'namely', 'ie', 'sincere', 'whereby',
+                'con', 'latterly', 'becoming', 'meanwhile', 'afterwards',
+                'thence', 'whoever', 'otherwise', 'anything', 'however',
+                'whereas', 'although', 'hereafter', 'already', 'beforehand',
+                'etc', 'whenever', 'even', 'someone', 'whereupon', 'inc',
+                'sometimes', 'ltd', 'cant'
+            }
+            nltk_stopwords = set(stopwords.words('english'))
 
-        self.tokenizer_stoplist_xlarge = (nltk_stopwords | ENGLISH_STOP_WORDS
-                                          | {"n't", "'s", "'m", "ca"})
+            excluded_tokenizer_stopwords = {
+                'why', 'when', 'where', 'why', 'how', 'which', 'what', 'whose',
+                'whom'
+            }
 
-        self.tokenizer_stoplist_large = (nltk_stopwords | custom_stoplist
-                                         | {"n't", "'s", "'m", "ca"})
+            self.tokenizer_stoplist_xlarge = (nltk_stopwords
+                                              | ENGLISH_STOP_WORDS
+                                              | {"n't", "'s", "'m", "ca"})
 
-        self.tokenizer_stoplist = self.tokenizer_stoplist_large - excluded_tokenizer_stopwords
+            self.tokenizer_stoplist_large = (nltk_stopwords | custom_stoplist
+                                             | {"n't", "'s", "'m", "ca"})
+
+            self.tokenizer_stoplist = self.tokenizer_stoplist_large - excluded_tokenizer_stopwords
+        elif language == 'es':
+            self.tokenizer_stoplist = self.tokenizer_stoplist_large =\
+                self.tokenizer_stoplist_xlarge = set(stopwords.words('spanish'))
+        elif language == 'fr':
+            self.tokenizer_stoplist = self.tokenizer_stoplist_large =\
+                self.tokenizer_stoplist_xlarge = set(stopwords.words('french'))
+        elif language == 'it':
+            self.tokenizer_stoplist = self.tokenizer_stoplist_large =\
+                self.tokenizer_stoplist_xlarge = set(stopwords.words('italian'))
+        elif language == 'pt':
+            self.tokenizer_stoplist = self.tokenizer_stoplist_large =\
+                self.tokenizer_stoplist_xlarge = set(stopwords.words('portuguese'))
+        elif language == 'nl':
+            self.tokenizer_stoplist = self.tokenizer_stoplist_large =\
+                self.tokenizer_stoplist_xlarge = set(stopwords.words('dutch'))
 
         # List of symbols we don't care about
         self.tokenizer_symbols = [char for char in string.punctuation] + [
@@ -182,11 +235,8 @@ class SpacyWrapper:
         # list of all recognized entities
         entity_list = []
         for word in doc.ents:
-            named_entity = NamedEntity(
-                word.text,
-                word.label_,
-                word.start_char,
-                word.end_char)
+            named_entity = NamedEntity(word.text, word.label_, word.start_char,
+                                       word.end_char)
             if named_entity.category is not None:
                 entity_list.append(named_entity)
             else:

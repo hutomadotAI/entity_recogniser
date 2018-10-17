@@ -1,6 +1,6 @@
 import json
 
-# map from typeshttps://spacy.io/docs/usage/entity-recognition#entity-type
+# map from types https://spacy.io/docs/usage/entity-recognition#entity-type
 ENTITY_CATEGORY_MAPPING = {
     # names of entities
     "GPE": "sys.places",
