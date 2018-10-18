@@ -68,6 +68,14 @@ class SpacyWrapper:
         self.logger = _get_logger()
         self.minimal_ers_mode = minimal_ers_mode
         self.language = language
+        self.tokenizer_stoplist_xlarge = None
+        self.tokenizer_stoplist_large = None
+        self.tokenizer_stoplist = None
+        self.tokenizer_symbols = None
+        self.nlp = None
+        self.matcher = None
+        self.GPE_ID = None
+        self.PERSON_ID = None
 
     def reload_model(self, minimal_ers_mode, language):
         self.minimal_ers_mode = minimal_ers_mode
@@ -204,26 +212,47 @@ class SpacyWrapper:
                                              | {"n't", "'s", "'m", "ca"})
 
             self.tokenizer_stoplist = self.tokenizer_stoplist_large - excluded_tokenizer_stopwords
+
+            # List of symbols we don't care about
+            self.tokenizer_symbols = [char for char in string.punctuation] + [
+                "-----", "---", "...", "“", "”", '"', "'ve"
+            ]
         elif language == 'es':
-            self.tokenizer_stoplist = self.tokenizer_stoplist_large =\
+            self.tokenizer_stoplist = set()
+            self.tokenizer_stoplist_large =\
                 self.tokenizer_stoplist_xlarge = set(stopwords.words('spanish'))
+
+            self.tokenizer_symbols = [char for char in string.punctuation] + [
+                "-----", "---", "...", "“", "”", '"', "¿"
+            ]
         elif language == 'fr':
             self.tokenizer_stoplist = self.tokenizer_stoplist_large =\
                 self.tokenizer_stoplist_xlarge = set(stopwords.words('french'))
+
+            self.tokenizer_symbols = [char for char in string.punctuation] + [
+                "-----", "---", "...", "“", "”", '"'
+            ]
         elif language == 'it':
             self.tokenizer_stoplist = self.tokenizer_stoplist_large =\
                 self.tokenizer_stoplist_xlarge = set(stopwords.words('italian'))
+
+            self.tokenizer_symbols = [char for char in string.punctuation] + [
+                "-----", "---", "...", "“", "”", '"'
+            ]
         elif language == 'pt':
             self.tokenizer_stoplist = self.tokenizer_stoplist_large =\
                 self.tokenizer_stoplist_xlarge = set(stopwords.words('portuguese'))
+
+            self.tokenizer_symbols = [char for char in string.punctuation] + [
+                "-----", "---", "...", "“", "”", '"'
+            ]
         elif language == 'nl':
             self.tokenizer_stoplist = self.tokenizer_stoplist_large =\
                 self.tokenizer_stoplist_xlarge = set(stopwords.words('dutch'))
 
-        # List of symbols we don't care about
-        self.tokenizer_symbols = [char for char in string.punctuation] + [
-            "-----", "---", "...", "“", "”", '"', "'ve"
-        ]
+            self.tokenizer_symbols = [char for char in string.punctuation] + [
+                "-----", "---", "...", "“", "”", '"'
+            ]
 
     def get_entities(self, q):
         # gets the 'q' parameter and initiates the NLP component
