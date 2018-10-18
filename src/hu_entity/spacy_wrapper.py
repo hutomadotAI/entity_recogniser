@@ -223,7 +223,7 @@ class SpacyWrapper:
 
         # List of symbols we don't care about
         self.tokenizer_symbols = [char for char in string.punctuation] + [
-            "-----", "---", "...", "“", "”", '"', "'ve"
+            "-----", "---", "...", "“", "”", '"', "'ve", "¿"
         ]
 
     def get_entities(self, q):
