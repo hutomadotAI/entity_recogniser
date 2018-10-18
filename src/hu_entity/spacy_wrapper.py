@@ -205,7 +205,8 @@ class SpacyWrapper:
 
             self.tokenizer_stoplist = self.tokenizer_stoplist_large - excluded_tokenizer_stopwords
         elif language == 'es':
-            self.tokenizer_stoplist = self.tokenizer_stoplist_large =\
+            self.tokenizer_stoplist = set()
+            self.tokenizer_stoplist_large =\
                 self.tokenizer_stoplist_xlarge = set(stopwords.words('spanish'))
         elif language == 'fr':
             self.tokenizer_stoplist = self.tokenizer_stoplist_large =\
