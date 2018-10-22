@@ -209,18 +209,18 @@ class SpacyWrapper:
                                               | {"n't", "'s", "'m", "ca"})
 
             self.tokenizer_stoplist_large = (nltk_stopwords | custom_stoplist
-                                             | {"n't", "'s", "'m", "ca"})
+                                             | {"n't", "'s", "'m", "ca"}) - \
+                                            excluded_tokenizer_stopwords
 
-            self.tokenizer_stoplist = self.tokenizer_stoplist_large - excluded_tokenizer_stopwords
+            self.tokenizer_stoplist = set()
 
             # List of symbols we don't care about
             self.tokenizer_symbols = [char for char in string.punctuation] + [
                 "-----", "---", "...", "“", "”", '"', "'ve"
             ]
         elif language == 'es':
-            self.tokenizer_stoplist = set()
-            self.tokenizer_stoplist_large =\
-                self.tokenizer_stoplist_xlarge = set(stopwords.words('spanish'))
+            self.tokenizer_stoplist = self.tokenizer_stoplist_large = set()
+            self.tokenizer_stoplist_xlarge = set(stopwords.words('spanish'))
 
             self.tokenizer_symbols = [char for char in string.punctuation] + [
                 "-----", "---", "...", "“", "”", '"', "¿"
