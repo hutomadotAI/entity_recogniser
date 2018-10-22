@@ -208,9 +208,9 @@ class SpacyWrapper:
                                               | ENGLISH_STOP_WORDS
                                               | {"n't", "'s", "'m", "ca"})
 
-            self.tokenizer_stoplist_large = (nltk_stopwords | custom_stoplist
-                                             | {"n't", "'s", "'m", "ca"}) - \
-                                            excluded_tokenizer_stopwords
+            self.tokenizer_stoplist_large = (
+                nltk_stopwords | custom_stoplist | {"n't", "'s", "'m", "ca"}
+                ) - excluded_tokenizer_stopwords
 
             self.tokenizer_stoplist = set()
 
