@@ -105,3 +105,37 @@ async def test_server_find_entities(cli):
     assert next(iter(values['focus'])) == "cars"
     assert next(iter(values['apple'])) == "fruits"
     assert len(values) == 2
+
+async def test_server_find_regex_entities(cli):
+    resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { "alarms" : [ "a210", "a211", "a212" ] }, "regex_entities" : { "ralarms" : "[a]\\\\d{3}$" } }')
+    assert resp.status == 200
+    json_resp = await resp.json()
+    assert json_resp['conversation'] == "Alarm number A212"
+    values = json_resp['entities']
+    matched_entities=values['a212']
+    assert len(matched_entities) == 2
+    assert "alarms" in matched_entities
+    assert "ralarms" in matched_entities
+
+async def test_server_find_regex_only(cli):
+    resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { }, "regex_entities" : { "ralarms" : "[a]\\\\d{3}$" } }')
+    assert resp.status == 200
+    json_resp = await resp.json()
+    assert json_resp['conversation'] == "Alarm number A212"
+    values = json_resp['entities']
+    assert next(iter(values['a212'])) == "ralarms"
+    assert len(values) == 1
+
+async def test_server_find_standard_only(cli):
+    resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { "alarms" : [ "a210", "a211", "a212" ] }, "regex_entities" : { } }')
+    assert resp.status == 200
+    json_resp = await resp.json()
+    assert json_resp['conversation'] == "Alarm number A212"
+    values = json_resp['entities']
+    assert next(iter(values['a212'])) == "alarms"
+    assert len(values) == 1
+
+async def test_server_bad_regex(cli):
+    resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { "alarms" : [ "a210", "a211", "a212" ] }, "regex_entities" : { "ralarms" : "[a\\\\d{3}$" } }')
+    assert resp.status == 400
+    assert resp.reason == "Invalid regex found"
