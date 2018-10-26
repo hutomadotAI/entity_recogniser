@@ -211,7 +211,8 @@ def main():
         logger.warning("ERS_MINIMAL_SERVER not set or invalid '{}'".format(
             env_minimal_server_str))
 
-    er_server = EntityRecognizerServer(env_minimal_server_int,
+    env_minimal_server = bool(env_minimal_server_int)
+    er_server = EntityRecognizerServer(env_minimal_server,
                                        language=env_language)
     er_server.initialize()
 

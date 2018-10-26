@@ -64,7 +64,7 @@ class PlaceholderToken:
 
 
 class SpacyWrapper:
-    def __init__(self, minimal_ers_mode="False", language='en'):
+    def __init__(self, minimal_ers_mode=False, language='en'):
         self.logger = _get_logger()
         self.minimal_ers_mode = minimal_ers_mode
         self.language = language
@@ -98,10 +98,10 @@ class SpacyWrapper:
             raise SpacyException(
                 "Language {} is not available".format(language))
 
-        if minimal_ers_mode == "True":
+        if minimal_ers_mode:
             self.logger.warning(
                 "Loading minimal model for {}...".format(language))
-            model = language_models[language][0]
+            model = language_models[0]
         else:
             if len(language_models) > 1:
                 self.logger.warning("Loading model in {}...".format(language))
