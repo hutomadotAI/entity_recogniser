@@ -8,8 +8,8 @@ def test_entity_finder_basic():
     values = setup_data()
     finder.setup_entity_values(values)
     found_matches = finder.find_entity_values("I want a Carrot cake")
-    assert(len(found_matches["carrot"]) == 1)
-    assert("CakeType" in found_matches["carrot"])
+    assert(len(found_matches["Carrot"]) == 1)
+    assert("CakeType" in found_matches["Carrot"])
 
 
 def test_entity_finder_no_entities():
@@ -52,8 +52,8 @@ def test_entity_finder_multiple_value_matches():
     values = setup_data()
     finder.setup_entity_values(values)
     found_matches = finder.find_entity_values("I want a Carrot cake and then a beer to drink")
-    assert(len(found_matches["carrot"]) == 1)
-    assert("CakeType" in found_matches["carrot"])
+    assert(len(found_matches["Carrot"]) == 1)
+    assert("CakeType" in found_matches["Carrot"])
     assert(len(found_matches["beer"]) == 1)
     assert("Drinks" in found_matches["beer"])
 
@@ -101,9 +101,9 @@ def test_entity_finder_regex_and_standard():
     finder.setup_entity_values(values)
     finder.setup_regex_entities(regex)
     found_matches = finder.find_entity_values("I want a Large cake and some beer")
-    assert(len(found_matches["large"]) == 2)
-    assert("CakeSize" in found_matches["large"])
-    assert("CakeSizeRegex" in found_matches["large"])
+    assert(len(found_matches["Large"]) == 2)
+    assert("CakeSize" in found_matches["Large"])
+    assert("CakeSizeRegex" in found_matches["Large"])
     assert(len(found_matches["beer"]) == 1)
     assert("Drinks" in found_matches["beer"])
 

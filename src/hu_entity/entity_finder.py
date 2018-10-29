@@ -34,20 +34,20 @@ class EntityFinder:
         words_matched = set()
 
         for word in words_to_find:
-            compare_word = word.lower()
-            compare_word = compare_word.strip(self.punctuation)
+            compare_word_original = word.strip(self.punctuation)
+            compare_word = compare_word_original.lower()
             if word not in words_matched:
                 match_found = False
                 for entity_name, entity_trie in self.entity_tries.items():
                     if compare_word in entity_trie:
-                        entity_matches[compare_word].append(entity_name)
+                        entity_matches[compare_word_original].append(entity_name)
                         match_found = True
                 for entity_name, compiled in self.regex_entities.items():
-                    if compiled.fullmatch(compare_word):
-                        entity_matches[compare_word].append(entity_name)
+                    if compiled.fullmatch(compare_word_original):
+                        entity_matches[compare_word_original].append(entity_name)
                         match_found = True
                 if match_found:
-                    words_matched.add(compare_word)
+                    words_matched.add(compare_word_original)
 
         return entity_matches
 

@@ -102,37 +102,45 @@ async def test_server_find_entities(cli):
     json_resp = await resp.json()
     assert json_resp['conversation'] == "a Focus is a type of car, an Apple is a fruit"
     values = json_resp['entities']
-    assert next(iter(values['focus'])) == "cars"
-    assert next(iter(values['apple'])) == "fruits"
+    assert next(iter(values['Focus'])) == "cars"
+    assert next(iter(values['Apple'])) == "fruits"
     assert len(values) == 2
 
 async def test_server_find_regex_entities(cli):
-    resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { "alarms" : [ "a210", "a211", "a212" ] }, "regex_entities" : { "ralarms" : "[a]\\\\d{3}$" } }')
+    resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { "alarms" : [ "a210", "a211", "a212" ] }, "regex_entities" : { "ralarms" : "[A]\\\\d{3}$" } }')
     assert resp.status == 200
     json_resp = await resp.json()
     assert json_resp['conversation'] == "Alarm number A212"
     values = json_resp['entities']
-    matched_entities=values['a212']
+    matched_entities=values['A212']
     assert len(matched_entities) == 2
     assert "alarms" in matched_entities
     assert "ralarms" in matched_entities
 
 async def test_server_find_regex_only(cli):
+    resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { }, "regex_entities" : { "ralarms" : "[A]\\\\d{3}$" } }')
+    assert resp.status == 200
+    json_resp = await resp.json()
+    assert json_resp['conversation'] == "Alarm number A212"
+    values = json_resp['entities']
+    assert next(iter(values['A212'])) == "ralarms"
+    assert len(values) == 1
+
+async def test_server_find_regex_only_case_sensitive(cli):
     resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { }, "regex_entities" : { "ralarms" : "[a]\\\\d{3}$" } }')
     assert resp.status == 200
     json_resp = await resp.json()
     assert json_resp['conversation'] == "Alarm number A212"
     values = json_resp['entities']
-    assert next(iter(values['a212'])) == "ralarms"
-    assert len(values) == 1
+    assert len(values) == 0
 
 async def test_server_find_standard_only(cli):
-    resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { "alarms" : [ "a210", "a211", "a212" ] }, "regex_entities" : { } }')
+    resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { "alarms" : [ "A210", "A211", "A212" ] }, "regex_entities" : { } }')
     assert resp.status == 200
     json_resp = await resp.json()
     assert json_resp['conversation'] == "Alarm number A212"
     values = json_resp['entities']
-    assert next(iter(values['a212'])) == "alarms"
+    assert next(iter(values['A212'])) == "alarms"
     assert len(values) == 1
 
 async def test_server_bad_regex(cli):
