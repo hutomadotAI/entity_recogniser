@@ -107,15 +107,24 @@ async def test_server_find_entities(cli):
     assert len(values) == 2
 
 async def test_server_find_regex_entities(cli):
+    resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A213", "entities" : { "alarms" : [ "a210", "a211", "a212" ] }, "regex_entities" : { "ralarms" : "[A]\\\\d{3}$" } }')
+    assert resp.status == 200
+    json_resp = await resp.json()
+    assert json_resp['conversation'] == "Alarm number A213"
+    values = json_resp['entities']
+    matched_entities=values['A213']
+    assert len(matched_entities) == 1
+    assert "ralarms" in matched_entities
+
+async def test_server_find_regex_entities_value_priority(cli):
     resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { "alarms" : [ "a210", "a211", "a212" ] }, "regex_entities" : { "ralarms" : "[A]\\\\d{3}$" } }')
     assert resp.status == 200
     json_resp = await resp.json()
     assert json_resp['conversation'] == "Alarm number A212"
     values = json_resp['entities']
     matched_entities=values['A212']
-    assert len(matched_entities) == 2
+    assert len(matched_entities) == 1
     assert "alarms" in matched_entities
-    assert "ralarms" in matched_entities
 
 async def test_server_find_regex_only(cli):
     resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { }, "regex_entities" : { "ralarms" : "[A]\\\\d{3}$" } }')

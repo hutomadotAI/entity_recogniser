@@ -1,4 +1,3 @@
-import pytest
 
 from hu_entity.entity_finder import EntityFinder
 
@@ -33,8 +32,18 @@ def test_entity_finder_multiple_matches():
     values = setup_data()
     finder.setup_entity_values(values)
     found_matches = finder.find_entity_values("I want a Carrot cake and then more carrot cake")
-    assert(len(found_matches["carrot"]) == 1)
-    assert("CakeType" in found_matches["carrot"])
+    assert(len(found_matches["Carrot"]) == 1)
+    assert("CakeType" in found_matches["Carrot"])
+
+
+def test_entity_finder_substring_matches():
+    finder = EntityFinder()
+    values = setup_data()
+    finder.setup_entity_values(values)
+    found_matches = finder.find_entity_values("I want a Diet Coke")
+    assert(len(found_matches) == 1)
+    assert(len(found_matches["Diet Coke"]) == 1)
+    assert("Drinks" in found_matches["Diet Coke"])
 
 
 def test_entity_finder_duplicate_matches():
@@ -90,8 +99,11 @@ def test_entity_finder_regex():
     regex = setup_regex()
     finder.setup_regex_entities(regex)
     found_matches = finder.find_entity_values("I want a large cake")
+    assert(len(found_matches)) == 2
     assert(len(found_matches["large"]) == 1)
     assert("CakeSizeRegex" in found_matches["large"])
+    assert(len(found_matches["cake"]) == 1)
+    assert("CakeTypeRegex" in found_matches["cake"])
 
 
 def test_entity_finder_regex_and_standard():
@@ -101,11 +113,37 @@ def test_entity_finder_regex_and_standard():
     finder.setup_entity_values(values)
     finder.setup_regex_entities(regex)
     found_matches = finder.find_entity_values("I want a Large cake and some beer")
-    assert(len(found_matches["Large"]) == 2)
+    assert(len(found_matches)) == 3
+
+    # Note this test also ensures that a word is not
+    assert(len(found_matches["Large"]) == 1)
     assert("CakeSize" in found_matches["Large"])
-    assert("CakeSizeRegex" in found_matches["Large"])
     assert(len(found_matches["beer"]) == 1)
     assert("Drinks" in found_matches["beer"])
+    assert(len(found_matches["cake"]) == 1)
+    assert("CakeTypeRegex" in found_matches["cake"])
+
+
+def test_entity_finder_regex_single_word_only():
+    finder = EntityFinder()
+    regex = setup_regex()
+    finder.setup_regex_entities(regex)
+    found_matches = finder.find_entity_values("I want a Large biscuit")
+    assert(len(found_matches)) == 1
+    assert(len(found_matches["Large"]) == 1)
+    assert("CakeSizeRegex" in found_matches["Large"])
+
+
+def test_entity_finder_list_type_priority():
+    finder = EntityFinder()
+    values = setup_data()
+    regex = setup_regex()
+    finder.setup_entity_values(values)
+    finder.setup_regex_entities(regex)
+    found_matches = finder.find_entity_values("Large")
+    assert(len(found_matches)) == 1
+    assert(len(found_matches["Large"]) == 1)
+    assert("CakeSize" in found_matches["Large"])
 
 
 def test_entity_finder_split_message():
@@ -114,16 +152,14 @@ def test_entity_finder_split_message():
     assert(len(words) == 6)
 
 
-@pytest.fixture()
 def setup_data():
     values = {"CakeSize": ["Large", "Medium", "Tiny"],
               "CakeType": ["Carrot", "Chocolate", "Coffee", "Sponge"],
-              "Drinks": ["Coffee", "Beer", "Red Wine", "White Wine"],
+              "Drinks": ["Coffee", "Beer", "Red Wine", "White Wine", "Coke", "Diet Coke"],
               "Biscuit": ["Rich Tea", "Digestive", "Chocolate"]}
     return values
 
 
-@pytest.fixture()
 def setup_regex():
     regex = {"CakeSizeRegex": "^[Ll].+$",
              "CakeTypeRegex": "^[Cc].+$"}
