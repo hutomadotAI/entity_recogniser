@@ -1,17 +1,26 @@
 import marisa_trie
 import string
 import re
+import sre_constants
+import logging
 from collections import defaultdict
+
+
+def _get_logger():
+    logger = logging.getLogger('hu_entity.entity_finder')
+    return logger
 
 
 class EntityFinder:
 
     def __init__(self):
+        self.logger = _get_logger()
         self.entity_tries = {}
         self.punctuation = string.punctuation
         self.regex_entities = {}
 
     def setup_entity_values(self, entities):
+        self.logger.info("Setting up value entities'%s'", entities)
         for entity_name, entity_values in entities.items():
             # This can be done more concisely, expanded for clarity
             updated_words = []
@@ -23,9 +32,23 @@ class EntityFinder:
             self.entity_tries[entity_name] = marisa_trie.Trie(updated_words)
 
     def setup_regex_entities(self, regex_entities):
-        for entity_name, entity_regex in regex_entities.items():
-            compiled = re.compile(entity_regex)
-            self.regex_entities[entity_name] = compiled
+        self.logger.info("Setting up regex entities '%s'", regex_entities)
+        regex_good = True
+        try:
+            for entity_name, entity_regex in regex_entities.items():
+                self.logger.debug("Compiling regex entity '%s'", entity_regex)
+                compiled = re.compile(entity_regex)
+                self.regex_entities[entity_name] = compiled
+        except re.error:
+            self.logger.warn("Caught re.error in setup_regex_entities")
+            regex_good = False
+        except sre_constants.error:
+            self.logger.warn("Caught sre_constants.error in setup_regex_entities")
+            regex_good = False
+        except Exception:
+            self.logger.warn("Caught Exception in setup_regex_entities")
+            regex_good = False
+        return regex_good
 
     def find_entity_values(self, conversation):
         # Construct the list of values to match against

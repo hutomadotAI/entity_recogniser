@@ -6,7 +6,6 @@ import os
 import aiohttp
 import traceback
 from aiohttp import web
-import re
 
 import yaml
 
@@ -107,19 +106,23 @@ class EntityRecognizerServer:
         body = await request.json()
         print(body)
 
-        self.logger.info("Find entity request")
-        try:
-            finder = EntityFinder()
-            if 'entities' in body:
-                print(body['entities'])
-                finder.setup_entity_values(body['entities'])
-            if 'regex_entities' in body:
-                print(body['regex_entities'])
-                finder.setup_regex_entities(body['regex_entities'])
-        except re.error:
-            self.logger.info('Invalid regex found in findentities', url)
-            raise web.HTTPBadRequest(reason='Invalid regex found')
+        self.logger.info("Find entity request, populating entities")
+        finder = EntityFinder()
+        regex_good = True
+        if 'entities' in body:
+            self.logger.info("List entities found")
+            finder.setup_entity_values(body['entities'])
+        if 'regex_entities' in body:
+            self.logger.info("Regex entities found")
+            regex_good = finder.setup_regex_entities(body['regex_entities'])
 
+        if not regex_good:
+            self.logger.info('Invalid regex found in findentities')
+            raise web.HTTPBadRequest(reason='Invalid regex found')
+        else:
+            self.logger.info('No regex submitted or regex compiled')
+
+        self.logger.info("Find entity request, matching entities")
         values = finder.find_entity_values(body['conversation'])
         data = {'conversation': body['conversation'], 'entities': values}
         resp = web.json_response(data)
