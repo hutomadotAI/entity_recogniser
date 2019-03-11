@@ -1,10 +1,7 @@
-# Docker-compose has some issues with .dockerignore files
 # Python
 **/__pycache__
-
+**/*.pyc
+**/.cache
 # don't copy in .egg-info directories
-**/.egg-info
-
-# ignore tests
-**/TEST*.xml
+**/*.egg-info
 

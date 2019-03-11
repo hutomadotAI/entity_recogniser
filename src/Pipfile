@@ -9,6 +9,8 @@ verify_ssl = false
 name = "hu_pypi"
 
 [packages]
+fluent-logger = {version="*", index="pypi"}
+python-json-logger = {version="*", index="pypi"}
 spacy = {version="*", index="pypi"}
 numpy = {version="*", index="pypi"}
 nltk = {version="*", index="pypi"}
@@ -18,8 +20,6 @@ marisa-trie = {version="*", index="pypi"}
 scipy = {version="*", index="pypi"}
 sklearn = {version="*", index="pypi"}
 # internal libraries
-hu_logging = {version="*", index="hu_pypi"}
-hu_utils = {version="*", index="hu_pypi"}
 hu_entity = {editable = true, path = "."}
 
 [dev-packages]
@@ -33,4 +33,4 @@ yapf = {version="*", index="pypi"}
 hu_build = {version="*", index="hu_pypi"}
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"
