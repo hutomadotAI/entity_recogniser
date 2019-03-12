@@ -94,7 +94,7 @@ class SpacyWrapper:
 
         try:
             language_models = model_lookup[language]
-        except (KeyError) as exc:
+        except (KeyError):
             raise SpacyException(
                 "Language {} is not available".format(language))
 
