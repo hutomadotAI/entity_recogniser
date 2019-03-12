@@ -170,7 +170,7 @@ formatters:
     class: pythonjsonlogger.jsonlogger.JsonFormatter
     format: "(asctime) (levelname) (name) (message)"
 filters:
-    emblogfilter:
+    erlogfilter:
         (): hu_entity.server.ErLogFilter
 handlers:
   console:
@@ -178,7 +178,7 @@ handlers:
     level: INFO
     stream: ext://sys.stdout
     formatter: json
-    filters: [emblogfilter]
+    filters: [erlogfilter]
 """
 
 
