@@ -23,6 +23,7 @@ class EntityRecognizerServer:
     def __init__(self, minimal_ers_mode=False, language='en'):
         self.logger = _get_logger()
         self.spacy_wrapper = SpacyWrapper(minimal_ers_mode, language)
+        self.finder = EntityFinder()
 
     def initialize(self):
         self.spacy_wrapper.initialize()
@@ -107,14 +108,13 @@ class EntityRecognizerServer:
         print(body)
 
         self.logger.info("Find entity request, populating entities")
-        finder = EntityFinder()
         regex_good = True
         if 'entities' in body:
             self.logger.info("List entities found")
-            finder.setup_entity_values(body['entities'])
+            self.finder.setup_entity_values(body['entities'])
         if 'regex_entities' in body:
             self.logger.info("Regex entities found")
-            regex_good = finder.setup_regex_entities(body['regex_entities'])
+            regex_good = self.finder.setup_regex_entities(body['regex_entities'])
 
         if not regex_good:
             self.logger.info('Invalid regex found in findentities')
@@ -123,11 +123,59 @@ class EntityRecognizerServer:
             self.logger.info('No regex submitted or regex compiled')
 
         self.logger.info("Find entity request, matching entities")
-        values = finder.find_entity_values(body['conversation'])
+        values = self.finder.find_entity_values(body['conversation'])
         data = {'conversation': body['conversation'], 'entities': values}
         resp = web.json_response(data)
 
         return resp
+    
+    async def populate_entities(self, request):
+        '''
+        populates the entity tries
+        '''
+        url = request.url
+        if not request.can_read_body:
+            self.logger.warning(
+                'Invalid populate_entities request, no body found, url was %s',
+                url)
+            raise web.HTTPBadRequest
+
+        body = await request.json()
+        print(body)
+
+        self.logger.info("Populating entities")
+        if 'entities' in body:
+            self.logger.info("List entities found")
+            self.finder.setup_entity_values(body['entities'])
+        if 'regex_entities' in body:
+            self.logger.info("Regex entities supplied but ignored")
+
+        return web.Response()
+
+    async def entity_check(self, request):
+        '''
+        looks for matching entities
+        '''
+        url = request.url
+        if not request.can_read_body:
+            self.logger.warning(
+                'Invalid entity_check request, no body found, url was %s',
+                url)
+            raise web.HTTPBadRequest
+
+        body = await request.json()
+        print(body)
+
+        self.logger.info("entity_check request, matching entities")
+        values = self.finder.find_entity_values(body['conversation'])
+        data = {'conversation': body['conversation'], 'entities': values}
+        resp = web.json_response(data)
+
+        return resp
+
+    async def reset(self, request):
+        self.finder = EntityFinder()
+        return web.Response()
 
 
 class ExceptionWrappedCaller:
@@ -168,6 +216,12 @@ def initialize_web_app(web_app, er_server):
         ExceptionWrappedCaller(er_server.handle_findentities))
     web_app.router.add_route('POST', '/reload',
                              ExceptionWrappedCaller(er_server.reload))
+    web_app.router.add_route('POST', '/reset',
+                             ExceptionWrappedCaller(er_server.reset))
+    web_app.router.add_route('POST', '/populate_entities',
+                             ExceptionWrappedCaller(er_server.populate_entities))
+    web_app.router.add_route('POST', '/entity_check',
+                             ExceptionWrappedCaller(er_server.entity_check))
 
 
 LOGGING_CONFIG_TEXT = """
