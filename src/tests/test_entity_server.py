@@ -97,6 +97,7 @@ async def test_server_find_entities_requires_body(cli):
 
 
 async def test_server_find_entities(cli):
+    resp = await cli.post('/reset')
     resp = await cli.post('/findentities', data='{"conversation" : "a Focus is a type of car, an Apple is a fruit","entities" : { "cars" : [ "Fiesta", "Focus", "Golf" ], "fruits" : [ "Apple", "Banana", "Pear" ] } }')
     assert resp.status == 200
     json_resp = await resp.json()
@@ -107,6 +108,7 @@ async def test_server_find_entities(cli):
     assert len(values) == 2
 
 async def test_server_find_regex_entities(cli):
+    resp = await cli.post('/reset')
     resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A213", "entities" : { "alarms" : [ "a210", "a211", "a212" ] }, "regex_entities" : { "ralarms" : "[A]\\\\d{3}$" } }')
     assert resp.status == 200
     json_resp = await resp.json()
@@ -117,6 +119,7 @@ async def test_server_find_regex_entities(cli):
     assert "ralarms" in matched_entities
 
 async def test_server_find_regex_entities_value_priority(cli):
+    resp = await cli.post('/reset')
     resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { "alarms" : [ "a210", "a211", "a212" ] }, "regex_entities" : { "ralarms" : "[A]\\\\d{3}$" } }')
     assert resp.status == 200
     json_resp = await resp.json()
@@ -127,6 +130,7 @@ async def test_server_find_regex_entities_value_priority(cli):
     assert "alarms" in matched_entities
 
 async def test_server_find_regex_only(cli):
+    resp = await cli.post('/reset')
     resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { }, "regex_entities" : { "ralarms" : "[A]\\\\d{3}$" } }')
     assert resp.status == 200
     json_resp = await resp.json()
@@ -136,6 +140,7 @@ async def test_server_find_regex_only(cli):
     assert len(values) == 1
 
 async def test_server_find_regex_only_case_sensitive(cli):
+    resp = await cli.post('/reset')
     resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { }, "regex_entities" : { "ralarms" : "[a]\\\\d{3}$" } }')
     assert resp.status == 200
     json_resp = await resp.json()
@@ -144,6 +149,7 @@ async def test_server_find_regex_only_case_sensitive(cli):
     assert len(values) == 0
 
 async def test_server_find_standard_only(cli):
+    resp = await cli.post('/reset')
     resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { "alarms" : [ "A210", "A211", "A212" ] }, "regex_entities" : { } }')
     assert resp.status == 200
     json_resp = await resp.json()
@@ -153,6 +159,7 @@ async def test_server_find_standard_only(cli):
     assert len(values) == 1
 
 async def test_server_bad_regex(cli):
+    resp = await cli.post('/reset')
     resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { "alarms" : [ "a210", "a211", "a212" ] }, "regex_entities" : { "ralarms" : "[a\\\\d{3}$" } }')
     assert resp.status == 400
     assert resp.reason == "Invalid regex found"
