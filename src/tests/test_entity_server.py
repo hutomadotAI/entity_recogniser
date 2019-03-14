@@ -14,12 +14,12 @@ def ner_server():
 
 
 @pytest.fixture()
-def cli(loop, test_client, ner_server):
+async def cli(loop, aiohttp_client, ner_server):
     """Defines the CLI test HTTP client which will start a test HTTP server.
     Will reuse the module level ner_server pytest fixture which is the slow bit to initialize"""
-    web_app = web.Application(loop=loop)
+    web_app = web.Application()
     hu_entity.server.initialize_web_app(web_app, ner_server)
-    return loop.run_until_complete(test_client(web_app))
+    return await aiohttp_client(web_app)
 
 
 async def test_server_root_404(cli):

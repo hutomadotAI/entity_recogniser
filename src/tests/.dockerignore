@@ -1,7 +1,0 @@
-# Python
-**/__pycache__
-**/*.pyc
-**/.cache
-# don't copy in .egg-info directories
-**/*.egg-info
-

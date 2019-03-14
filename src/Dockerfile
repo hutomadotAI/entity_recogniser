@@ -1,8 +1,8 @@
 # Base off of the Python image
-FROM python:3.6.6-slim-stretch
+FROM python:3.7.2-slim-stretch AS common
 LABEL maintainer "Paul Annetts <paul.annetts@hutoma.com>"
 
-RUN echo "2018-07-06" > /os_patch_date.txt
+RUN echo "2019-03-11" > /os_patch_date.txt
 
 RUN apt-get update \
  && apt upgrade -y \
@@ -13,7 +13,7 @@ RUN apt-get update \
 
 # Install pipenv
 ENV PIP_NO_CACHE_DIR=false
-RUN pip install --upgrade pip==18.1 pipenv==2018.10.13
+RUN pip install --upgrade pip pipenv
 
 # Apply the pipenv
 RUN mkdir -p /src/hu_entity/
@@ -24,8 +24,8 @@ RUN pipenv install --system
 # Run script to download models for languages we require
 COPY initialize_spacy_model.py /src/
 RUN python initialize_spacy_model.py
-
 #---------------------------
+FROM common AS release
 # switch to non root user
 # define user/group IDs as ARG
 ARG USERID=1000
@@ -39,7 +39,7 @@ RUN python -m nltk.downloader stopwords
 
 USER root
 # Copy the code
-COPY hu_entity/ /src/hu_entity/
+COPY . /src/
 
 USER appuser
 WORKDIR /home/appuser
@@ -47,3 +47,11 @@ WORKDIR /home/appuser
 # Make available port 9095
 EXPOSE 9095
 CMD [ "python", "/src/hu_entity/server.py", "--port=9095" ]
+#---------------------------
+FROM common AS test
+RUN pipenv install --dev --system
+COPY --from=release /src/ /src/
+RUN pytest /src --junitxml=/tmp/tests.xml --timeout=60
+#---------------------------
+FROM release
+COPY --from=test /tmp/tests.xml /tmp/tests.xml

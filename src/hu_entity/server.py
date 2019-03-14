@@ -3,6 +3,8 @@ import argparse
 import logging
 import logging.config
 import os
+import pathlib
+
 import aiohttp
 import traceback
 from aiohttp import web
@@ -130,76 +132,81 @@ class EntityRecognizerServer:
         return resp
 
 
-class ExceptionWrappedCaller:
-    """Put an exception logging wrapper around all the endpoints.
-       This is preferable to using aiohttp middleware as we control
-       that here without upstream involvement"""
+@web.middleware
+async def log_error_middleware(request, handler):
+    try:
+        response = await handler(request)
+    except aiohttp.web_exceptions.HTTPException:
+        # assume if we're throwing this that it's already logged
+        raise
+    except Exception:
+        _get_logger().exception("Unexpected exception in call")
 
-    def __init__(self, call_to_wrap):
-        self.call_to_wrap = call_to_wrap
-        self.logger = _get_logger()
-
-    async def __call__(self, *args, **kwargs):
-        try:
-            response = await self.call_to_wrap(*args, **kwargs)
-        except aiohttp.web_exceptions.HTTPException:
-            # assume if we're throwing this that it's already logged
-            raise
-        except Exception as exc:
-            self.logger.exception("Unexpected exception in call")
-
-            error_string = "Internal Server Error\n" + traceback.format_exc()
-            raise aiohttp.web_exceptions.HTTPInternalServerError(
-                text=error_string)
-        return response
+        error_string = "Internal Server Error\n" + traceback.format_exc()
+        raise aiohttp.web_exceptions.HTTPInternalServerError(
+            text=error_string)
+    return response
 
 
 def initialize_web_app(web_app, er_server):
     logger = _get_logger()
     logger.warning("Entity Recognizer initializing server.")
-    web_app.router.add_route('GET', '/health',
-                             ExceptionWrappedCaller(er_server.health))
-    web_app.router.add_route('GET', '/ner',
-                             ExceptionWrappedCaller(er_server.handle_ner))
-    web_app.router.add_route('GET', '/tokenize',
-                             ExceptionWrappedCaller(er_server.handle_tokenize))
+    web_app.middlewares.append(log_error_middleware)
+    web_app.router.add_route('GET', '/health', er_server.health)
+    web_app.router.add_route('GET', '/ner', er_server.handle_ner)
+    web_app.router.add_route('GET', '/tokenize', er_server.handle_tokenize)
     web_app.router.add_route(
-        'POST', '/findentities',
-        ExceptionWrappedCaller(er_server.handle_findentities))
-    web_app.router.add_route('POST', '/reload',
-                             ExceptionWrappedCaller(er_server.reload))
+        'POST', '/findentities', er_server.handle_findentities)
+    web_app.router.add_route('POST', '/reload', er_server.reload)
 
 
 LOGGING_CONFIG_TEXT = """
 version: 1
 root:
   level: DEBUG
-  handlers: ['console' ,'elastic']
+  handlers: ['console']
 formatters:
-  default:
-    format: "%(asctime)s.%(msecs)03d|%(levelname)s|%(name)s|%(message)s"
-    datefmt: "%Y%m%d_%H%M%S"
+  json:
+    class: pythonjsonlogger.jsonlogger.JsonFormatter
+    format: "(asctime) (levelname) (name) (message)"
+filters:
+    erlogfilter:
+        (): hu_entity.server.ErLogFilter
 handlers:
   console:
     class: logging.StreamHandler
     level: INFO
     stream: ext://sys.stdout
-    formatter: default
-  elastic:
-    class: hu_logging.HuLogHandler
-    level: INFO
-    log_path: /tmp/hu_log
-    log_tag: ENTITY
-    es_log_index: entity-recog-v1
-    multi_process: False
+    formatter: json
+    filters: [erlogfilter]
 """
+
+
+class ErLogFilter(logging.Filter):
+    def __init__(self):
+        self.language = os.environ.get("ERS_LANGUAGE", "en")
+        self.version = os.environ.get("ERS_VERSION", None)
+
+    def filter(self, record):
+        """Add language, and if available, the version"""
+        record.er_language = self.language
+        if self.version:
+            record.er_version = self.version
+        return True
 
 
 def main():
     """Main function"""
-    logging_config = yaml.load(LOGGING_CONFIG_TEXT)
-    logging_config['handlers']['elastic']['elastic_search_url'] = \
-        os.environ.get('LOGGING_ES_URL', None)
+    logging_config_file = os.environ.get("LOGGING_CONFIG_FILE", None)
+    if logging_config_file:
+        logging_config_path = pathlib.Path(logging_config_file)
+        with logging_config_path.open() as file_handle:
+            logging_config = yaml.safe_load(file_handle)
+    else:
+        logging_config = yaml.load(LOGGING_CONFIG_TEXT)
+    print("*** LOGGING CONFIG ***")
+    print(logging_config)
+    print("*** LOGGING CONFIG ***")
     logging.config.dictConfig(logging_config)
 
     web_app = web.Application()
@@ -225,7 +232,7 @@ def main():
     args = parser.parse_args()
     port = args.port
 
-    logger.warning("Starting entity recognizer API on port %d", port)
+    logger.warning("Starting entity recognizer API on port %d", port, extra={"port": port})
     web.run_app(web_app, port=port)
 
 
