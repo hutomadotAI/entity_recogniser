@@ -11,7 +11,7 @@ name = "hu_pypi"
 [packages]
 fluent-logger = {version="*", index="pypi"}
 python-json-logger = {version="*", index="pypi"}
-spacy = {version="*", index="pypi"}
+spacy = {version="==2.0.18", index="pypi"}
 numpy = {version="*", index="pypi"}
 nltk = {version="*", index="pypi"}
 aiohttp = {version="*", index="pypi"}
