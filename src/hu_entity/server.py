@@ -179,6 +179,43 @@ class EntityRecognizerServer:
         self.finder = EntityFinder()
         return web.Response()
 
+        body = await request.json()
+        print(body)
+
+        self.logger.info("Populating entities")
+        if 'entities' in body:
+            self.logger.info("List entities found")
+            self.finder.setup_entity_values(body['entities'])
+        if 'regex_entities' in body:
+            self.logger.info("Regex entities supplied but ignored")
+
+        return web.Response()
+
+    async def entity_check(self, request):
+        '''
+        looks for matching entities
+        '''
+        url = request.url
+        if not request.can_read_body:
+            self.logger.warning(
+                'Invalid entity_check request, no body found, url was %s',
+                url)
+            raise web.HTTPBadRequest
+
+        body = await request.json()
+        print(body)
+
+        self.logger.info("entity_check request, matching entities")
+        values = self.finder.find_entity_values(body['conversation'])
+        data = {'conversation': body['conversation'], 'entities': values}
+        resp = web.json_response(data)
+
+        return resp
+
+    async def reset(self, request):
+        self.finder = EntityFinder()
+        return web.Response()
+
 
 @web.middleware
 async def log_error_middleware(request, handler):
