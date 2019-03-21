@@ -191,27 +191,6 @@ class EntityRecognizerServer:
 
         return web.Response()
 
-    async def entity_check(self, request):
-        '''
-        looks for matching entities
-        '''
-        url = request.url
-        if not request.can_read_body:
-            self.logger.warning(
-                'Invalid entity_check request, no body found, url was %s',
-                url)
-            raise web.HTTPBadRequest
-
-        body = await request.json()
-        print(body)
-
-        self.logger.info("entity_check request, matching entities")
-        values = self.finder.find_entity_values(body['conversation'])
-        data = {'conversation': body['conversation'], 'entities': values}
-        resp = web.json_response(data)
-
-        return resp
-
     async def reset(self, request):
         self.finder = EntityFinder()
         return web.Response()
@@ -240,19 +219,11 @@ def initialize_web_app(web_app, er_server):
     web_app.router.add_route('GET', '/health', er_server.health)
     web_app.router.add_route('GET', '/ner', er_server.handle_ner)
     web_app.router.add_route('GET', '/tokenize', er_server.handle_tokenize)
-    web_app.router.add_route(
-        'POST', '/findentities', er_server.handle_findentities)
+    web_app.router.add_route('POST', '/findentities', er_server.handle_findentities)
     web_app.router.add_route('POST', '/reload', er_server.reload)
-        'POST', '/findentities',
-        ExceptionWrappedCaller(er_server.handle_findentities))
-    web_app.router.add_route('POST', '/reload',
-                             ExceptionWrappedCaller(er_server.reload))
-    web_app.router.add_route('POST', '/reset',
-                             ExceptionWrappedCaller(er_server.reset))
-    web_app.router.add_route('POST', '/populate_entities',
-                             ExceptionWrappedCaller(er_server.populate_entities))
-    web_app.router.add_route('POST', '/entity_check',
-                             ExceptionWrappedCaller(er_server.entity_check))
+    web_app.router.add_route('POST', '/reset', er_server.reset)
+    web_app.router.add_route('POST', '/populate_entities', er_server.populate_entities)
+    web_app.router.add_route('POST', '/entity_check', er_server.entity_check)
 
 
 LOGGING_CONFIG_TEXT = """
