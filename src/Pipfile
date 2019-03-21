@@ -1,6 +1,6 @@
 [[source]]
 url = "https://pypi.org/simple"
-verify_ssl = true
+verify_ssl
 name = "pypi"
 
 [[source]]
@@ -9,8 +9,6 @@ verify_ssl = false
 name = "hu_pypi"
 
 [packages]
-fluent-logger = {version="*", index="pypi"}
-python-json-logger = {version="*", index="pypi"}
 spacy = {version="==2.0.18", index="pypi"}
 numpy = {version="*", index="pypi"}
 nltk = {version="*", index="pypi"}
@@ -19,6 +17,7 @@ pyyaml = {version="*", index="pypi"}
 marisa-trie = {version="*", index="pypi"}
 scipy = {version="*", index="pypi"}
 sklearn = {version="*", index="pypi"}
+datrie = {version="*", index="pypi"}
 # internal libraries
 hu_entity = {editable = true, path = "."}
 
@@ -33,4 +32,4 @@ yapf = {version="*", index="pypi"}
 hu_build = {version="*", index="hu_pypi"}
 
 [requires]
-python_version = "3.7"
+python_version = "3.6"

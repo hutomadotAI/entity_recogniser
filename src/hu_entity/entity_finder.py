@@ -1,10 +1,10 @@
 import marisa_trie
+import datrie
 import string
 import re
 import sre_constants
 import logging
 from collections import defaultdict
-
 
 def _get_logger():
     logger = logging.getLogger('hu_entity.entity_finder')
@@ -16,6 +16,7 @@ class EntityFinder:
     def __init__(self):
         self.logger = _get_logger()
         self.entity_tries = {}
+        self.dentity_tries = {}
         self.punctuation = string.punctuation
         self.regex_entities = {}
 
@@ -29,7 +30,20 @@ class EntityFinder:
                 temp_word = lower.strip(self.punctuation)
                 updated_words.append(temp_word)
 
-            self.entity_tries[entity_name] = marisa_trie.Trie(updated_words)
+            if(entity_name in self.dentity_tries):
+                for word in updated_words:
+                    self.dentity_tries[entity_name][word] = True
+            else:
+                # its a new trie
+                self.dentity_tries[entity_name] = datrie.Trie(string.printable)
+                for word in updated_words:
+                    self.dentity_tries[entity_name][word] = True
+            # if(entity_name in entity_tries):
+            #     # append to existing trie
+            # else:
+            #     # its a new trie
+            #     self.entity_tries[entity_name] = marisa_trie.Trie(updated_words)
+            self.logger.info("updated " + entity_name + " trie, now contains " + str(len(self.dentity_tries[entity_name])))
 
     def setup_regex_entities(self, regex_entities):
         self.logger.info("Setting up regex entities '%s'", regex_entities)
@@ -102,7 +116,7 @@ class EntityFinder:
             compare_word = compare_word_original.lower()
             if word not in words_matched:
                 match_found = False
-                for entity_name, entity_trie in self.entity_tries.items():
+                for entity_name, entity_trie in self.dentity_tries.items():
                     if compare_word in entity_trie:
                         candidate_matches_list[entity_name].append(compare_word_original)
                         match_found = True
