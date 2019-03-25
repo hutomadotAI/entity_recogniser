@@ -5,6 +5,8 @@ import logging.config
 import os
 import pathlib
 
+from memory_profiler import profile
+
 import aiohttp
 import traceback
 from aiohttp import web
@@ -131,6 +133,7 @@ class EntityRecognizerServer:
 
         return resp
     
+    @profile
     async def populate_entities(self, request):
         '''
         populates the entity tries
@@ -143,7 +146,7 @@ class EntityRecognizerServer:
             raise web.HTTPBadRequest
 
         body = await request.json()
-        print(body)
+        #print(body)
 
         self.logger.info("Populating entities")
         if 'entities' in body:
@@ -151,6 +154,8 @@ class EntityRecognizerServer:
             self.finder.setup_entity_values(body['entities'])
         if 'regex_entities' in body:
             self.logger.info("Regex entities supplied but ignored")
+        
+        print('done')
 
         return web.Response()
 

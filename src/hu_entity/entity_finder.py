@@ -21,7 +21,7 @@ class EntityFinder:
         self.regex_entities = {}
 
     def setup_entity_values(self, entities):
-        self.logger.info("Setting up value entities'%s'", entities)
+        self.logger.info("Setting up value entities")
         for entity_name, entity_values in entities.items():
             # This can be done more concisely, expanded for clarity
             updated_words = []
@@ -44,6 +44,7 @@ class EntityFinder:
             #     # its a new trie
             #     self.entity_tries[entity_name] = marisa_trie.Trie(updated_words)
             self.logger.info("updated " + entity_name + " trie, now contains " + str(len(self.dentity_tries[entity_name])))
+            self.logger.info("currently have " + str(len(self.dentity_tries)) + " entities")
 
     def setup_regex_entities(self, regex_entities):
         self.logger.info("Setting up regex entities '%s'", regex_entities)
