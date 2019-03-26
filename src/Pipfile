@@ -33,4 +33,4 @@ yapf = {version="*", index="pypi"}
 hu_build = {version="*", index="hu_pypi"}
 
 [requires]
-python_version = "3.7"
+python_version = "3.6"

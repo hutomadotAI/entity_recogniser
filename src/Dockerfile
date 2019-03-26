@@ -1,5 +1,5 @@
 # Base off of the Python image
-FROM python:3.7.2-slim-stretch AS common
+FROM python:3.6.8-slim-stretch AS common
 LABEL maintainer "Paul Annetts <paul.annetts@hutoma.com>"
 
 RUN echo "2019-03-11" > /os_patch_date.txt
