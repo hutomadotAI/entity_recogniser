@@ -1,7 +1,5 @@
 import datrie
 import string
-import re
-import sre_constants
 import logging
 from collections import defaultdict
 
@@ -38,7 +36,8 @@ class EntityFinder:
                 for word in updated_words:
                     self.dentity_tries[entity_name][word] = True
 
-            self.logger.info("updated " + entity_name + " trie, now contains " + str(len(self.dentity_tries[entity_name])))
+            self.logger.info("updated " + entity_name + " trie, now contains "
+                             + str(len(self.dentity_tries[entity_name])))
             self.logger.info("currently have " + str(len(self.dentity_tries)) + " entities")
 
     def delete_cached_entity_values(self, entities):
@@ -52,9 +51,7 @@ class EntityFinder:
     def find_entity_values(self, conversation):
         # Construct the list of values to match against
         words_to_find_list = self.split_message(conversation)
-        words_to_find_regex = conversation.split()
         candidate_matches_list = defaultdict(list)
-        candidate_matches_regex = defaultdict(list)
 
         entity_matches = defaultdict(list)
         words_matched = set()

@@ -112,7 +112,8 @@ class EntityRecognizerServer:
         body = await request.json()
 
         self.logger.info("Find entity request, populating entities")
-        # Note that this version does not persist entity values, so use a temporary instance of the finder
+        # Note that this version does not persist entity values,
+        # so use a temporary instance of the finder
         legacy_finder = LegacyEntityFinder()
         regex_good = True
         if 'entities' in body:
@@ -134,7 +135,7 @@ class EntityRecognizerServer:
         resp = web.json_response(data)
 
         return resp
-    
+
     @profile
     async def populate_entities(self, request):
         '''
@@ -203,6 +204,7 @@ class EntityRecognizerServer:
     async def reset(self, request):
         self.finder = EntityFinder()
         return web.Response()
+
 
 @web.middleware
 async def log_error_middleware(request, handler):
