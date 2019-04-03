@@ -156,3 +156,40 @@ async def test_server_bad_regex(cli):
     resp = await cli.post('/findentities', data='{"conversation" : "Alarm number A212", "entities" : { "alarms" : [ "a210", "a211", "a212" ] }, "regex_entities" : { "ralarms" : "[a\\\\d{3}$" } }')
     assert resp.status == 400
     assert resp.reason == "Invalid regex found"
+
+async def test_server_find_cached_entities(cli):
+    resp = await cli.post('/v2/populate_entities', data='{"entities" : { "cars" : [ "Fiesta", "Focus", "Golf" ], "fruits" : [ "Apple", "Banana", "Pear" ] } }')
+    assert resp.status == 200
+
+    resp = await cli.post('/v2/entity_check', data='{"conversation" : "a Focus is a type of car, an Apple is a fruit"}')
+    json_resp = await resp.json()
+
+    assert json_resp['conversation'] == "a Focus is a type of car, an Apple is a fruit"
+    values = json_resp['entities']
+    assert next(iter(values['Focus'])) == "cars"
+    assert next(iter(values['Apple'])) == "fruits"
+    assert len(values) == 2
+
+async def test_server_delete_entities(cli):
+    resp = await cli.post('/v2/populate_entities', data='{"entities" : { "cars" : [ "Fiesta", "Focus", "Golf" ], "fruits" : [ "Apple", "Banana", "Pear" ] } }')
+    assert resp.status == 200
+
+    resp = await cli.post('/v2/entity_check', data='{"conversation" : "a Focus is a type of car, an Apple is a fruit"}')
+    json_resp = await resp.json()
+    
+    assert json_resp['conversation'] == "a Focus is a type of car, an Apple is a fruit"
+    values = json_resp['entities']
+    assert next(iter(values['Focus'])) == "cars"
+    assert next(iter(values['Apple'])) == "fruits"
+    assert len(values) == 2
+
+    resp = await cli.post('/v2/delete_entities', data='{"entities" : { "cars" : [ ] } }')
+    assert resp.status == 200
+
+    resp = await cli.post('/v2/entity_check', data='{"conversation" : "a Focus is a type of car, an Apple is a fruit"}')
+    json_resp = await resp.json()
+
+    assert json_resp['conversation'] == "a Focus is a type of car, an Apple is a fruit"
+    values = json_resp['entities']
+    assert len(values) == 1
+    assert next(iter(values['Apple'])) == "fruits"

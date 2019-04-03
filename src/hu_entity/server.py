@@ -5,6 +5,8 @@ import logging.config
 import os
 import pathlib
 
+from memory_profiler import profile
+
 import aiohttp
 import traceback
 from aiohttp import web
@@ -14,6 +16,7 @@ import yaml
 from hu_entity.spacy_wrapper import SpacyWrapper, StopWordSize
 from hu_entity.named_entity import dumps_custom
 from hu_entity.entity_finder import EntityFinder
+from hu_entity.legacy_entity_finder import LegacyEntityFinder
 
 
 def _get_logger():
@@ -25,6 +28,7 @@ class EntityRecognizerServer:
     def __init__(self, minimal_ers_mode=False, language='en'):
         self.logger = _get_logger()
         self.spacy_wrapper = SpacyWrapper(minimal_ers_mode, language)
+        self.finder = EntityFinder()
 
     def initialize(self):
         self.spacy_wrapper.initialize()
@@ -106,17 +110,18 @@ class EntityRecognizerServer:
             raise web.HTTPBadRequest
 
         body = await request.json()
-        print(body)
 
         self.logger.info("Find entity request, populating entities")
-        finder = EntityFinder()
+        # Note that this version does not persist entity values,
+        # so use a temporary instance of the finder
+        legacy_finder = LegacyEntityFinder()
         regex_good = True
         if 'entities' in body:
             self.logger.info("List entities found")
-            finder.setup_entity_values(body['entities'])
+            legacy_finder.setup_entity_values(body['entities'])
         if 'regex_entities' in body:
             self.logger.info("Regex entities found")
-            regex_good = finder.setup_regex_entities(body['regex_entities'])
+            regex_good = legacy_finder.setup_regex_entities(body['regex_entities'])
 
         if not regex_good:
             self.logger.info('Invalid regex found in findentities')
@@ -125,11 +130,80 @@ class EntityRecognizerServer:
             self.logger.info('No regex submitted or regex compiled')
 
         self.logger.info("Find entity request, matching entities")
-        values = finder.find_entity_values(body['conversation'])
+        values = legacy_finder.find_entity_values(body['conversation'])
         data = {'conversation': body['conversation'], 'entities': values}
         resp = web.json_response(data)
 
         return resp
+
+    @profile
+    async def populate_entities(self, request):
+        '''
+        populates the entity tries
+        '''
+        url = request.url
+        if not request.can_read_body:
+            self.logger.warning(
+                'Invalid populate_entities request, no body found, url was %s',
+                url)
+            raise web.HTTPBadRequest
+
+        body = await request.json()
+
+        self.logger.info("Populating entities")
+        if 'entities' in body:
+            self.logger.info("List entities found")
+            self.finder.setup_cached_entity_values(body['entities'])
+        if 'regex_entities' in body:
+            self.logger.info("Regex entities supplied but ignored")
+
+        return web.Response()
+
+    async def delete_entities(self, request):
+        '''
+        populates the entity tries
+        '''
+        url = request.url
+        if not request.can_read_body:
+            self.logger.warning(
+                'Invalid delete_entities request, no body found, url was %s',
+                url)
+            raise web.HTTPBadRequest
+
+        body = await request.json()
+
+        self.logger.info("Populating entities")
+        if 'entities' in body:
+            self.logger.info("List entities found")
+            self.finder.delete_cached_entity_values(body['entities'])
+        if 'regex_entities' in body:
+            self.logger.info("Regex entities supplied but ignored")
+
+        return web.Response()
+
+    async def entity_check(self, request):
+        '''
+        looks for matching entities
+        '''
+        url = request.url
+        if not request.can_read_body:
+            self.logger.warning(
+                'Invalid entity_check request, no body found, url was %s',
+                url)
+            raise web.HTTPBadRequest
+
+        body = await request.json()
+
+        self.logger.info("entity_check request, matching entities")
+        values = self.finder.find_entity_values(body['conversation'])
+        data = {'conversation': body['conversation'], 'entities': values}
+        resp = web.json_response(data)
+
+        return resp
+
+    async def reset(self, request):
+        self.finder = EntityFinder()
+        return web.Response()
 
 
 @web.middleware
@@ -155,9 +229,12 @@ def initialize_web_app(web_app, er_server):
     web_app.router.add_route('GET', '/health', er_server.health)
     web_app.router.add_route('GET', '/ner', er_server.handle_ner)
     web_app.router.add_route('GET', '/tokenize', er_server.handle_tokenize)
-    web_app.router.add_route(
-        'POST', '/findentities', er_server.handle_findentities)
+    web_app.router.add_route('POST', '/findentities', er_server.handle_findentities)
     web_app.router.add_route('POST', '/reload', er_server.reload)
+    web_app.router.add_route('POST', '/v2/reset', er_server.reset)
+    web_app.router.add_route('POST', '/v2/populate_entities', er_server.populate_entities)
+    web_app.router.add_route('POST', '/v2/delete_entities', er_server.delete_entities)
+    web_app.router.add_route('POST', '/v2/entity_check', er_server.entity_check)
 
 
 LOGGING_CONFIG_TEXT = """
