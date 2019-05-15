@@ -48,10 +48,10 @@ WORKDIR /home/appuser
 EXPOSE 9095
 CMD [ "python", "/src/hu_entity/server.py", "--port=9095" ]
 #---------------------------
-FROM common AS test
-RUN pipenv install --dev --system
-COPY --from=release /src/ /src/
-RUN pytest /src --junitxml=/tmp/tests.xml --timeout=60
+#FROM common AS test
+#RUN pipenv install --dev --system
+#COPY --from=release /src/ /src/
+#RUN pytest /src --junitxml=/tmp/tests.xml --timeout=60
 #---------------------------
-FROM release
-COPY --from=test /tmp/tests.xml /tmp/tests.xml
+#FROM release
+#COPY --from=test /tmp/tests.xml /tmp/tests.xml
