@@ -3,6 +3,9 @@ substitutions:
   _GITHUB_USERNAME: "hutomadotAI" 
   _CONTAINER_SUBFOLDER: "src" 
 
+# This container takes a while to build 
+timeout: 1600s
+
 steps:
 # Show some debug info - current state of folder.
 - name: 'gcr.io/cloud-builders/git'
