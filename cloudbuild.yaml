@@ -35,6 +35,7 @@ steps:
 
 # Build the dockerfile with the latest cloned code.  
 - name: 'gcr.io/cloud-builders/docker'
+  timeout: 1000s
   args:
   - 'build'
   - '--tag=gcr.io/$PROJECT_ID/$REPO_NAME:latest'
