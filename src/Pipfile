@@ -3,10 +3,6 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
-[[source]]
-url = "https://pypi.hutoma.ai/simple"
-verify_ssl = false
-name = "hu_pypi"
 
 [packages]
 fluent-logger = {version="*", index="pypi"}
@@ -33,7 +29,6 @@ pytest-cov = {version="*", index="pypi"}
 pytest-timeout = {version="*", index="pypi"}
 flake8 = {version="*", index="pypi"}
 yapf = {version="*", index="pypi"}
-hu_build = {version="*", index="hu_pypi"}
 
 [requires]
 python_version = "3.6"
