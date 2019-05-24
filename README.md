@@ -20,7 +20,27 @@ It reduces the list of possible training matches to the ones that have the large
 In the next step  it calls function "match_entities". It counts the number of entity substrings which match between query and training questions. The training questions with the most matches are returned to the chat function. If the number of matches in this second step is zero the questions which matched the first step are returned. If both are zero an empty list is returned. 
 
 # Build and Test
-Use pipenv and pytest
+
+Requirements:
+- Docker
+
+
+To build the docker image from source, run:
+```
+cd src
+docker build -t hu_er .
+```
+
+To run the container:
+```
+docker run \
+    -p 9095:9095 \
+    -e ERS_LANGUAGE={language} \
+     --network hu_net \
+     --name hu_er \
+     hu_er
+```
+Where language can be _en_, _es_, _fr_, _pt_ or _it_.
 
 # Contribute
 TODO:
