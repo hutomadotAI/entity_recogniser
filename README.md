@@ -1,6 +1,8 @@
 # Introduction 
 The entity matcher serves as a client to connect with the entity recognizer for entity extraction as well as tokenization. It also includes matching logic based solely on entities found in the training and chat questions. It only deals with spacy entities. Custom entities are treated as string matches and are therefore discussed in the String Matcher. 
 
+The Entity Recogniser is part of the Conversational AI Platform and will be also installed if you follow the instructions posted in our [main repo](https://github.com/hutomadotAI/Hutoma-Conversational-AI-Platform)
+
 
 ## Match Entities 
 The chat worker calls function "match_entities" with the chat question, the entities found in the question and potentially a list of indices to subset the training question (see discussion in QA-Matcher).  At the beginning it gets preprocessed to normalize the questions. 
@@ -41,6 +43,3 @@ docker run \
      hu_er
 ```
 Where language can be _en_, _es_, _fr_, _pt_ or _it_.
-
-# Contribute
-TODO:
